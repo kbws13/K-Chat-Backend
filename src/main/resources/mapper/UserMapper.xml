@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xyz.kbws.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="xyz.kbws.model.entity.User">
+            <id property="userId" column="userId" jdbcType="VARCHAR"/>
+            <result property="email" column="email" jdbcType="VARCHAR"/>
+            <result property="nickName" column="nickName" jdbcType="VARCHAR"/>
+            <result property="joinType" column="joinType" jdbcType="TINYINT"/>
+            <result property="sex" column="sex" jdbcType="TINYINT"/>
+            <result property="password" column="password" jdbcType="VARCHAR"/>
+            <result property="userRole" column="userRole" jdbcType="VARCHAR"/>
+            <result property="personalSignature" column="personalSignature" jdbcType="VARCHAR"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="lastLoginTime" column="lastLoginTime" jdbcType="TIMESTAMP"/>
+            <result property="areaName" column="areaName" jdbcType="VARCHAR"/>
+            <result property="areaCode" column="areaCode" jdbcType="VARCHAR"/>
+            <result property="lastOffTime" column="lastOffTime" jdbcType="BIGINT"/>
+            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        userId,email,nickName,
+        joinType,sex,password,userRole,
+        personalSignature,status,createTime,
+        lastLoginTime,areaName,areaCode,
+        lastOffTime,isDelete
+    </sql>
+</mapper>
