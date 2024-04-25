@@ -5,10 +5,10 @@
 <mapper namespace="xyz.kbws.mapper.UserBeautyMapper">
 
     <resultMap id="BaseResultMap" type="xyz.kbws.model.entity.UserBeauty">
-            <id property="id" column="id" jdbcType="INTEGER"/>
-            <result property="email" column="email" jdbcType="VARCHAR"/>
-            <result property="userId" column="userId" jdbcType="VARCHAR"/>
-            <result property="status" column="status" jdbcType="TINYINT"/>
+        <id property="id" column="id" jdbcType="INTEGER"/>
+        <result property="email" column="email" jdbcType="VARCHAR"/>
+        <result property="userId" column="userId" jdbcType="VARCHAR"/>
+        <result property="status" column="status" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">

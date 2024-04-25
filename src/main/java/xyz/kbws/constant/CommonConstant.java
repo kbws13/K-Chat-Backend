@@ -14,5 +14,10 @@ public interface CommonConstant {
      * 降序
      */
     String SORT_ORDER_DESC = " descend";
-    
+
+    /**
+     * 用户id长度
+     */
+    Integer LENGTH_11 = 11;
+
 }

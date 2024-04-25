@@ -5,21 +5,21 @@
 <mapper namespace="xyz.kbws.mapper.UserMapper">
 
     <resultMap id="BaseResultMap" type="xyz.kbws.model.entity.User">
-            <id property="userId" column="userId" jdbcType="VARCHAR"/>
-            <result property="email" column="email" jdbcType="VARCHAR"/>
-            <result property="nickName" column="nickName" jdbcType="VARCHAR"/>
-            <result property="joinType" column="joinType" jdbcType="TINYINT"/>
-            <result property="sex" column="sex" jdbcType="TINYINT"/>
-            <result property="password" column="password" jdbcType="VARCHAR"/>
-            <result property="userRole" column="userRole" jdbcType="VARCHAR"/>
-            <result property="personalSignature" column="personalSignature" jdbcType="VARCHAR"/>
-            <result property="status" column="status" jdbcType="TINYINT"/>
-            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
-            <result property="lastLoginTime" column="lastLoginTime" jdbcType="TIMESTAMP"/>
-            <result property="areaName" column="areaName" jdbcType="VARCHAR"/>
-            <result property="areaCode" column="areaCode" jdbcType="VARCHAR"/>
-            <result property="lastOffTime" column="lastOffTime" jdbcType="BIGINT"/>
-            <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
+        <id property="userId" column="userId" jdbcType="VARCHAR"/>
+        <result property="email" column="email" jdbcType="VARCHAR"/>
+        <result property="nickName" column="nickName" jdbcType="VARCHAR"/>
+        <result property="joinType" column="joinType" jdbcType="TINYINT"/>
+        <result property="sex" column="sex" jdbcType="TINYINT"/>
+        <result property="password" column="password" jdbcType="VARCHAR"/>
+        <result property="userRole" column="userRole" jdbcType="VARCHAR"/>
+        <result property="personalSignature" column="personalSignature" jdbcType="VARCHAR"/>
+        <result property="status" column="status" jdbcType="TINYINT"/>
+        <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+        <result property="lastLoginTime" column="lastLoginTime" jdbcType="TIMESTAMP"/>
+        <result property="areaName" column="areaName" jdbcType="VARCHAR"/>
+        <result property="areaCode" column="areaCode" jdbcType="VARCHAR"/>
+        <result property="lastOffTime" column="lastOffTime" jdbcType="BIGINT"/>
+        <result property="isDelete" column="isDelete" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
