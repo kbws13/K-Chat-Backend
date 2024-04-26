@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xyz.kbws.mapper.UserContactMapper">
+
+    <resultMap id="BaseResultMap" type="xyz.kbws.model.entity.UserContact">
+            <id property="userId" column="userId" jdbcType="VARCHAR"/>
+            <id property="contactId" column="contactId" jdbcType="VARCHAR"/>
+            <result property="contactType" column="contactType" jdbcType="TINYINT"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+            <result property="updateTime" column="updateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        userId,contactId,contactType,
+        createTime,status,updateTime
+    </sql>
+</mapper>

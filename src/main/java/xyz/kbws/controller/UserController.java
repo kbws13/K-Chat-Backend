@@ -6,6 +6,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import xyz.kbws.annotation.AuthCheck;
 import xyz.kbws.common.BaseResponse;
 import xyz.kbws.common.ErrorCode;
 import xyz.kbws.common.ResultUtils;
@@ -90,6 +91,7 @@ public class UserController {
 
     @ApiOperation(value = "获取系统设置")
     @GetMapping("/sysSetting")
+    @AuthCheck
     public BaseResponse<SysSetting> getSysSetting() {
         SysSetting sysSetting = redisComponent.getSysSetting();
         return ResultUtils.success(sysSetting);

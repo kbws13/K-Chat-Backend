@@ -4,8 +4,12 @@ import cn.hutool.jwt.JWT;
 import cn.hutool.jwt.signers.JWTSignerUtil;
 import org.springframework.stereotype.Component;
 import xyz.kbws.common.ErrorCode;
+import xyz.kbws.constant.RedisConstant;
 import xyz.kbws.exception.ThrowUtils;
+import xyz.kbws.model.vo.UserVO;
+import xyz.kbws.redis.RedisUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -15,6 +19,9 @@ import javax.servlet.http.HttpServletRequest;
  */
 @Component
 public class JwtUtils {
+
+    @Resource
+    private RedisUtils redisUtils;
 
     /**
      * 创建Token
@@ -48,5 +55,10 @@ public class JwtUtils {
     public void verifyToken(String token) {
         boolean verify = JWT.of(token).verify();
         ThrowUtils.throwIf(!verify, ErrorCode.TOKEN_ERROR);
+    }
+
+    public UserVO getUserVOByToken(HttpServletRequest request) {
+        String token = request.getHeader("token");
+        return (UserVO) redisUtils.get(RedisConstant.WS_TOKEN + token);
     }
 }

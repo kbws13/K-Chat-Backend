@@ -13,6 +13,12 @@ import java.lang.annotation.Target;
 public @interface AuthCheck {
 
     /**
+     * 校验登录
+     * @return
+     */
+    boolean checkLogin() default true;
+
+    /**
      * 必须有某个角色
      *
      * @return
