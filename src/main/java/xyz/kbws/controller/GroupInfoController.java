@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import xyz.kbws.annotation.AuthCheck;
 import xyz.kbws.common.BaseResponse;
 import xyz.kbws.common.ResultUtils;
+import xyz.kbws.model.entity.GroupInfo;
 import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.service.GroupInfoService;
 import xyz.kbws.utils.JwtUtils;
@@ -18,6 +19,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
 
 /**
  * @author kbws
@@ -44,8 +46,15 @@ public class GroupInfoController {
                                          String notice,
                                          @NotNull Integer joinType,
                                          MultipartFile avatarFile,
-                                         MultipartFile avatarCover) {
+                                         MultipartFile avatarCover) throws IOException {
         UserVO userVOByToken = jwtUtils.getUserVOByToken(request);
+        GroupInfo groupInfo = new GroupInfo();
+        groupInfo.setId(id);
+        groupInfo.setName(name);
+        groupInfo.setOwnerId(userVOByToken.getUserId());
+        groupInfo.setNotice(notice);
+        groupInfo.setJoinType(joinType);
+        groupInfoService.save(groupInfo, avatarFile, avatarCover);
         return ResultUtils.success("");
     }
 }

@@ -5,9 +5,12 @@ package xyz.kbws.constant;
  */
 public interface FileConstant {
 
-    /**
-     * COS 访问地址
-     * todo 需替换配置
-     */
-    String COS_HOST = "https://blog-1312417182.cos.ap-chengdu.myqcloud.com";
+    String FILE_FOLDER = "file/";
+
+    String AVATAR = "avatar/";
+
+    String IMAGE_SUFFIX = ".png";
+
+    String COVER_IMAGE_SUFFIX = "_cover.png";
+
 }
