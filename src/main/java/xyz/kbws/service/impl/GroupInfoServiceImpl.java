@@ -98,7 +98,7 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
         }
         String filePath = targetFileFolder.getPath() + "/" + groupInfo.getId() + FileConstant.IMAGE_SUFFIX;
         avatarFile.transferTo(new File(filePath));
-        avatarCover.transferTo(new File(filePath + FileConstant.COVER_IMAGE_SUFFIX));
+        avatarCover.transferTo(new File(targetFileFolder.getPath() + "/" + groupInfo.getId() + FileConstant.COVER_IMAGE_SUFFIX));
     }
 }
 

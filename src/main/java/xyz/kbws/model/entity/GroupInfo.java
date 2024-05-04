@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 /**
@@ -34,6 +36,7 @@ public class GroupInfo implements Serializable {
     /**
      * 创建时间
      */
+    @JsonFormat(locale = "zh", timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
     private Date createTime;
 
     /**
@@ -50,6 +53,12 @@ public class GroupInfo implements Serializable {
      * 1:正常 0:解散
      */
     private Integer status;
+
+    /**
+     * 群组成员数量
+     */
+    @TableField(exist = false)
+    private Integer memberCount;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
