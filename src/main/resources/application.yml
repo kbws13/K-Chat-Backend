@@ -88,6 +88,7 @@ knife4j:
 # 项目目录
 project:
   folder: D:/Data/Project/K-Chat/K-Chat-Backend/
+  baseUrl: http://localhost:8101/api/file
 # 日志级别配置
 log:
   root:

@@ -26,6 +26,9 @@ public class AppConfig {
     @Value("${project.folder:}")
     private String projectFolder;
 
+    @Value("${project.baseUrl}")
+    private String baseUrl;
+
     public String getProjectFolder() {
         if (StrUtil.isEmpty(projectFolder) && !projectFolder.endsWith("/")) {
             projectFolder = projectFolder + "/";
