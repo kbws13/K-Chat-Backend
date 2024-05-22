@@ -4,10 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import xyz.kbws.annotation.AuthCheck;
 import xyz.kbws.common.BaseResponse;
@@ -20,6 +17,7 @@ import xyz.kbws.model.enums.GroupStatusEnum;
 import xyz.kbws.model.enums.UserContactStatusEnum;
 import xyz.kbws.model.enums.UserContactTypeEnum;
 import xyz.kbws.model.vo.GroupInfoVO;
+import xyz.kbws.model.vo.UserContactVO;
 import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.service.GroupInfoService;
 import xyz.kbws.service.UserContactService;
@@ -111,13 +109,11 @@ public class GroupInfoController {
     }
 
     @ApiOperation(value = "获取聊天会话群聊详情")
-    @PostMapping("/getGroupInfo4Chat")
+    @GetMapping("/getGroupInfo4Chat/{groupId}")
     @AuthCheck
-    public BaseResponse<GroupInfoVO> getGroupInfo4Chat(HttpServletRequest request, @NotEmpty String groupId) {
+    public BaseResponse<GroupInfoVO> getGroupInfo4Chat(HttpServletRequest request, @PathVariable("groupId") String groupId) {
         GroupInfo groupInfo = getGroupDetailCommon(request, groupId);
-        QueryWrapper<UserContact> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("contactId", groupId).eq("status", UserContactStatusEnum.FRIEND.getStatus()).orderByDesc("createTime");
-        List<UserContact> userContactList = userContactService.list(queryWrapper);
+        List<UserContactVO> userContactList = userContactService.listUsers(groupId);
         GroupInfoVO groupInfoVO = new GroupInfoVO();
         groupInfoVO.setGroupInfo(groupInfo);
         groupInfoVO.setUserContactList(userContactList);

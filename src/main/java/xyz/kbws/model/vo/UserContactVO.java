@@ -1,8 +1,5 @@
-package xyz.kbws.model.entity;
+package xyz.kbws.model.vo;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -11,17 +8,27 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * 联系人表
- * @TableName user_contact
+ * @author kbws
+ * @date 2024/5/22
+ * @description:
  */
-@TableName(value ="user_contact")
 @Data
-public class UserContact implements Serializable {
+public class UserContactVO implements Serializable {
+
     /**
      * 用户id
      */
-    @TableId
     private String userId;
+
+    /**
+     * 昵称
+     */
+    private String nickName;
+
+    /**
+     * 性别 0:男 1:女
+     */
+    private Integer sex;
 
     /**
      * 联系人id或者群组id
@@ -52,6 +59,5 @@ public class UserContact implements Serializable {
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date updateTime;
 
-    @TableField(exist = false)
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 7513664475349537921L;
 }

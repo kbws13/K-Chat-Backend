@@ -17,4 +17,8 @@
         userId,contactId,contactType,
         createTime,status,updateTime
     </sql>
+
+    <select id="listUsers" parameterType="string" resultType="xyz.kbws.model.vo.UserContactVO">
+        select c.*, u.nickName, u.sex from user_contact c inner join user u on u.userId = c.userId where contactId = #{userId}
+    </select>
 </mapper>

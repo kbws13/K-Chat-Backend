@@ -2,7 +2,6 @@ package xyz.kbws.model.vo;
 
 import lombok.Data;
 import xyz.kbws.model.entity.GroupInfo;
-import xyz.kbws.model.entity.UserContact;
 
 import java.util.List;
 
@@ -16,5 +15,5 @@ public class GroupInfoVO {
 
     private GroupInfo groupInfo;
 
-    private List<UserContact> userContactList;
+    private List<UserContactVO> userContactList;
 }
