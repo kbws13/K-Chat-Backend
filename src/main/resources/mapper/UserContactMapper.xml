@@ -21,4 +21,8 @@
     <select id="listUsers" parameterType="string" resultType="xyz.kbws.model.vo.UserContactVO">
         select c.*, u.nickName, u.sex from user_contact c inner join user u on u.userId = c.userId where contactId = #{userId}
     </select>
+
+    <select id="selectByUserIdAndContactId" resultType="xyz.kbws.model.entity.UserContact">
+        select * from user_contact where userId = #{userId} and contactId = #{userId}
+    </select>
 </mapper>

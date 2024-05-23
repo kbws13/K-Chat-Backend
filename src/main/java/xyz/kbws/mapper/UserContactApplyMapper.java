@@ -9,4 +9,6 @@ import xyz.kbws.model.entity.UserContactApply;
  * @description:
  */
 public interface UserContactApplyMapper extends BaseMapper<UserContactApply> {
+
+    UserContactApply selectByPrimaryKey(String applyId, String receiveId, String contactId);
 }

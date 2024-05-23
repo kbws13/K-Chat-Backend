@@ -20,4 +20,8 @@
         contactType,contactId,lastApplyTime,
         status,applyInfo
     </sql>
+
+    <select id="selectByPrimaryKey" resultType="xyz.kbws.model.entity.UserContactApply">
+        select * from user_contact_apply where applyId = #{applyId} and receiveId = #{receiveId} and contactId = #{contactId}
+    </select>
 </mapper>

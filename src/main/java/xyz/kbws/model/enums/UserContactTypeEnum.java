@@ -6,7 +6,7 @@ import lombok.Getter;
 /**
  * @author kbws
  * @date 2024/4/24
- * @description:
+ * @description: 联系人类型
  */
 @Getter
 public enum UserContactTypeEnum {

@@ -27,5 +27,8 @@ public interface UserConstant {
      */
     String BAN_ROLE = "ban";
 
-    // endregion
+    /**
+     * 默认申请信息模板
+     */
+    String APPLY_MESSAGE_TEMPLATE = "你好，我是%s";
 }
