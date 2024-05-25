@@ -1,7 +1,10 @@
 package xyz.kbws.service;
 
-import xyz.kbws.model.entity.UserContactApply;
 import com.baomidou.mybatisplus.extension.service.IService;
+import xyz.kbws.model.entity.UserContactApply;
+import xyz.kbws.model.vo.UserContactApplyVO;
+
+import java.util.List;
 
 /**
 * @author hsy
@@ -9,5 +12,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 * @createDate 2024-04-26 14:51:59
 */
 public interface UserContactApplyService extends IService<UserContactApply> {
-
+    List<UserContactApplyVO> getUserContactApplyVO(String receiveId);
 }

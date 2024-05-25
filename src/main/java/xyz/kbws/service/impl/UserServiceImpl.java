@@ -91,6 +91,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public UserVO userLogin(String email, String password) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("email", email);
         User user = userMapper.selectOne(queryWrapper);
         if (user == null || !user.getPassword().equals(password)) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "账号或密码错误");

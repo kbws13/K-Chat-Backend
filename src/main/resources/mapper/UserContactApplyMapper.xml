@@ -24,4 +24,19 @@
     <select id="selectByPrimaryKey" resultType="xyz.kbws.model.entity.UserContactApply">
         select * from user_contact_apply where applyId = #{applyId} and receiveId = #{receiveId} and contactId = #{contactId}
     </select>
+
+    <select id="selectApplyVO" resultType="xyz.kbws.model.vo.UserContactApplyVO">
+        select
+            a.*,
+            case
+            when a.contactType = 0 then u.nickName
+            when a.contactType = 1 then g.name
+            end as contactName
+        from
+            user_contact_apply a
+            left join user u on u.userId = a.applyId
+            left join group_info g on g.id = a.contactId
+        where
+            a.receiveId = #{receiveId}
+    </select>
 </mapper>
