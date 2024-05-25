@@ -14,6 +14,7 @@ import xyz.kbws.common.ResultUtils;
 import xyz.kbws.exception.BusinessException;
 import xyz.kbws.exception.ThrowUtils;
 import xyz.kbws.model.dto.userContact.UserContactAddRequest;
+import xyz.kbws.model.dto.userContactApply.UserContactApplyDealWithRequest;
 import xyz.kbws.model.entity.UserContactApply;
 import xyz.kbws.model.vo.UserContactApplyVO;
 import xyz.kbws.model.vo.UserContactSearchResultVO;
@@ -88,6 +89,16 @@ public class UserContactController {
         List<UserContactApplyVO> userContactApplyVO = userContactApplyService.getUserContactApplyVO(receiveId);
         userContactApplyVOPage.setRecords(userContactApplyVO);
         return ResultUtils.success(userContactApplyVOPage);
+    }
+
+
+    @ApiOperation(value = "处理申请")
+    @PostMapping("/dealWithApply")
+    public BaseResponse<String> dealWithApply(HttpServletRequest request, @RequestBody UserContactApplyDealWithRequest dealWithRequest) {
+        ThrowUtils.throwIf(dealWithRequest == null, ErrorCode.PARAMS_ERROR);
+        String userId = jwtUtils.getUserId(request);
+        userContactApplyService.dealWithApply(userId, dealWithRequest.getApplyId(), dealWithRequest.getStatus());
+        return ResultUtils.success("操作成功");
     }
 
 }

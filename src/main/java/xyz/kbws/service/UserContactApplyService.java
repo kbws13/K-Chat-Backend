@@ -12,5 +12,8 @@ import java.util.List;
 * @createDate 2024-04-26 14:51:59
 */
 public interface UserContactApplyService extends IService<UserContactApply> {
+
     List<UserContactApplyVO> getUserContactApplyVO(String receiveId);
+
+    void dealWithApply(String userId, Integer applyId, Integer status);
 }
