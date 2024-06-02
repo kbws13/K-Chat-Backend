@@ -22,6 +22,7 @@ import xyz.kbws.model.enums.*;
 import xyz.kbws.model.vo.UserContactSearchResultVO;
 import xyz.kbws.model.vo.UserContactVO;
 import xyz.kbws.model.vo.UserVO;
+import xyz.kbws.service.UserContactApplyService;
 import xyz.kbws.service.UserContactService;
 
 import javax.annotation.Resource;
@@ -36,6 +37,9 @@ import java.util.List;
 @Service
 public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserContact>
     implements UserContactService{
+
+    @Resource
+    private UserContactApplyService userContactApplyService;
 
     @Resource
     private UserContactMapper userContactMapper;
@@ -130,8 +134,8 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
         }
         // 直接加入不用记录申请记录
         if (JoinTypeEnum.JOIN.getType().equals(joinType)) {
-            // TODO 添加联系人
-
+            // 添加联系人
+            userContactApplyService.addUserContact(applyUserId, receiveUserId, contactId, contactTypeEnum.getType(), applyMessage);
             return joinType;
         }
         UserContactApply userContactApply = userContactApplyMapper.selectByPrimaryKey(applyUserId, receiveUserId, contactId);

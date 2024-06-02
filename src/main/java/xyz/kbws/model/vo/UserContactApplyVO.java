@@ -1,6 +1,7 @@
 package xyz.kbws.model.vo;
 
 import lombok.Data;
+import xyz.kbws.model.enums.UserContactApplyStatusEnum;
 
 import java.io.Serializable;
 
@@ -56,6 +57,16 @@ public class UserContactApplyVO implements Serializable {
      * 申请人/群名
      */
     private String contactName;
+
+    /**
+     * 状态名字
+     */
+    private String statusName;
+
+    public String getStatusName() {
+        UserContactApplyStatusEnum statusEnum = UserContactApplyStatusEnum.getByStatus(status);
+        return statusEnum == null ? null : statusEnum.getDesc();
+    }
 
     private static final long serialVersionUID = -1307085639931116354L;
 }

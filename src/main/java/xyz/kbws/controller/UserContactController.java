@@ -16,6 +16,7 @@ import xyz.kbws.exception.ThrowUtils;
 import xyz.kbws.model.dto.userContact.UserContactAddRequest;
 import xyz.kbws.model.dto.userContactApply.UserContactApplyDealWithRequest;
 import xyz.kbws.model.entity.UserContactApply;
+import xyz.kbws.model.enums.UserContactTypeEnum;
 import xyz.kbws.model.vo.UserContactApplyVO;
 import xyz.kbws.model.vo.UserContactSearchResultVO;
 import xyz.kbws.model.vo.UserContactVO;
@@ -101,4 +102,16 @@ public class UserContactController {
         return ResultUtils.success("操作成功");
     }
 
+    @ApiOperation(value = "获取联系人")
+    @GetMapping("/myContact/{contactType}")
+    @AuthCheck
+    public BaseResponse<List<UserContactVO>> myContact(HttpServletRequest request, @PathVariable("contactType") String contactType) {
+        UserContactTypeEnum contactTypeEnum = UserContactTypeEnum.getByName(contactType);
+        if (contactTypeEnum == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        UserVO userVOByToken = jwtUtils.getUserVOByToken(request);
+
+        return ResultUtils.success(null);
+    }
 }

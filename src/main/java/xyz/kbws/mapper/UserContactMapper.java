@@ -21,4 +21,18 @@ public interface UserContactMapper extends BaseMapper<UserContact> {
     List<UserContactVO> listUsers(String userId);
 
     UserContact selectByUserIdAndContactId(String userId, String contactId);
+
+    /**
+     * 获取我的群组列表
+     * @param userId
+     * @return
+     */
+    List<UserContactVO> myContactGroup(String userId);
+
+    /**
+     * 获取我的好友列表
+     * @param userId
+     * @return
+     */
+    List<UserContactVO> myContactUser(String userId);
 }

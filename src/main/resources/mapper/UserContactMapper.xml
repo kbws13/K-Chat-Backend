@@ -25,4 +25,12 @@
     <select id="selectByUserIdAndContactId" resultType="xyz.kbws.model.entity.UserContact">
         select * from user_contact where userId = #{userId} and contactId = #{userId}
     </select>
+
+    <select id="myContactGroup" resultType="xyz.kbws.model.vo.UserContactVO">
+        select c.*, g.name contactName from user_contact c inner join group_info g on c.contactId = g.id and g.ownerId != c.userId
+    </select>
+
+    <select id="myContactUser" resultType="xyz.kbws.model.vo.UserContactVO">
+        select c.*, u.nickName contactName from user_contact c inner join user u on u.userId = c.userId
+    </select>
 </mapper>
