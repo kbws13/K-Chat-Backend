@@ -18,6 +18,30 @@
         createTime,status,updateTime
     </sql>
 
+    <sql id="base_condition_filed">
+        <if test="query.userId != null and query.userId!=''">
+            and c.userId = #{query.userId}
+        </if>
+        <if test="query.contactId != null and query.contactId!=''">
+            and contactId = #{query.contactId}
+        </if>
+        <if test="query.contactType != null">
+            and contactType = #{query.contactType}
+        </if>
+        <if test="query.createTime != null and query.createTime!=''">
+            <![CDATA[ and  createTime=str_to_date(#{query.createTime}, '%Y-%m-%d') ]]>
+        </if>
+        <if test="query.status != null">
+            and c.status = #{query.status}
+        </if>
+        <if test="query.updateTime != null and query.updateTime!=''">
+            <![CDATA[ and  updateTime=str_to_date(#{query.updateTime}, '%Y-%m-%d') ]]>
+        </if>
+        <if test="query.statusArray!=null and query.statusArray.length>0">
+            and c.status in(<foreach collection="query.StatusArray" separator="," item="item">#{item}</foreach>)
+        </if>
+    </sql>
+
     <select id="listUsers" parameterType="string" resultType="xyz.kbws.model.vo.UserContactVO">
         select c.*, u.nickName, u.sex from user_contact c inner join user u on u.userId = c.userId where contactId = #{userId}
     </select>
@@ -26,11 +50,28 @@
         select * from user_contact where userId = #{userId} and contactId = #{userId}
     </select>
 
-    <select id="myContactGroup" resultType="xyz.kbws.model.vo.UserContactVO">
-        select c.*, g.name contactName from user_contact c inner join group_info g on c.contactId = g.id and g.ownerId != c.userId
-    </select>
-
-    <select id="myContactUser" resultType="xyz.kbws.model.vo.UserContactVO">
-        select c.*, u.nickName contactName from user_contact c inner join user u on u.userId = c.userId
+    <!-- 查询集合-->
+    <select id="myContact" resultType="xyz.kbws.model.vo.UserContactVO">
+        SELECT c.*
+        <if test="query.queryContactUserInfo">
+            , u.nickName contactName, u.sex
+        </if>
+        <if test="query.queryGroupInfo">
+            ,g.name contactName
+        </if>
+        FROM user_contact c
+        <if test="query.queryContactUserInfo">
+            inner join user u on c.contactId = u.userId
+        </if>
+        <if test="query.queryGroupInfo">
+            inner join group_info g on c.contactId = g.id
+            <if test="query.excludeMyGroup">
+                and g.ownerId != c.userId
+            </if>
+        </if>
+        <include refid="base_condition_filed"/>
+        <if test="query.orderBy!=null">
+            order by ${query.orderBy}
+        </if>
     </select>
 </mapper>

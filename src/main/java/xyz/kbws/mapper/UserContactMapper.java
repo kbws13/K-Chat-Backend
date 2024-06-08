@@ -1,6 +1,8 @@
 package xyz.kbws.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Param;
+import xyz.kbws.model.dto.userContact.UserContactQueryDTO;
 import xyz.kbws.model.entity.UserContact;
 import xyz.kbws.model.vo.UserContactVO;
 
@@ -24,15 +26,9 @@ public interface UserContactMapper extends BaseMapper<UserContact> {
 
     /**
      * 获取我的群组列表
-     * @param userId
+     * @param query
      * @return
      */
-    List<UserContactVO> myContactGroup(String userId);
+    List<UserContactVO> myContact(@Param("query") UserContactQueryDTO query);
 
-    /**
-     * 获取我的好友列表
-     * @param userId
-     * @return
-     */
-    List<UserContactVO> myContactUser(String userId);
 }

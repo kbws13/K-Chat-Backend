@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.kbws.common.ErrorCode;
@@ -14,6 +15,7 @@ import xyz.kbws.mapper.GroupInfoMapper;
 import xyz.kbws.mapper.UserContactApplyMapper;
 import xyz.kbws.mapper.UserContactMapper;
 import xyz.kbws.mapper.UserMapper;
+import xyz.kbws.model.dto.userContact.UserContactQueryDTO;
 import xyz.kbws.model.entity.GroupInfo;
 import xyz.kbws.model.entity.User;
 import xyz.kbws.model.entity.UserContact;
@@ -38,6 +40,7 @@ import java.util.List;
 public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserContact>
     implements UserContactService{
 
+    @Lazy
     @Resource
     private UserContactApplyService userContactApplyService;
 
@@ -161,6 +164,11 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
             // TODO 发送 ws 消息
         }
         return joinType;
+    }
+
+    @Override
+    public List<UserContactVO> listByParam(UserContactQueryDTO userContactQueryDTO) {
+        return userContactMapper.myContact(userContactQueryDTO);
     }
 }
 

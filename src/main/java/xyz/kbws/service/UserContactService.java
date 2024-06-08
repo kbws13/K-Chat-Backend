@@ -1,6 +1,7 @@
 package xyz.kbws.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import xyz.kbws.model.dto.userContact.UserContactQueryDTO;
 import xyz.kbws.model.entity.UserContact;
 import xyz.kbws.model.vo.UserContactSearchResultVO;
 import xyz.kbws.model.vo.UserContactVO;
@@ -30,4 +31,11 @@ public interface UserContactService extends IService<UserContact> {
      * @return
      */
     Integer apply(UserVO userVO, String contactId, String applyMessage);
+
+    /**
+     * 根据参数获取联系人信息
+     * @param userContactQueryDTO 查询参数
+     * @return
+     */
+    List<UserContactVO> listByParam(UserContactQueryDTO userContactQueryDTO);
 }

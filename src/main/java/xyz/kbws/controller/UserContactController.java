@@ -14,8 +14,10 @@ import xyz.kbws.common.ResultUtils;
 import xyz.kbws.exception.BusinessException;
 import xyz.kbws.exception.ThrowUtils;
 import xyz.kbws.model.dto.userContact.UserContactAddRequest;
+import xyz.kbws.model.dto.userContact.UserContactQueryDTO;
 import xyz.kbws.model.dto.userContactApply.UserContactApplyDealWithRequest;
 import xyz.kbws.model.entity.UserContactApply;
+import xyz.kbws.model.enums.UserContactStatusEnum;
 import xyz.kbws.model.enums.UserContactTypeEnum;
 import xyz.kbws.model.vo.UserContactApplyVO;
 import xyz.kbws.model.vo.UserContactSearchResultVO;
@@ -111,7 +113,22 @@ public class UserContactController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         UserVO userVOByToken = jwtUtils.getUserVOByToken(request);
-
-        return ResultUtils.success(null);
+        UserContactQueryDTO userContactQueryDTO = new UserContactQueryDTO();
+        userContactQueryDTO.setUserId(userVOByToken.getUserId());
+        userContactQueryDTO.setCategoryType(contactTypeEnum.getType());
+        if (UserContactTypeEnum.USER == contactTypeEnum) {
+            userContactQueryDTO.setQueryContactUserInfo(true);
+        } else if (UserContactTypeEnum.GROUP == contactTypeEnum) {
+            userContactQueryDTO.setQueryGroupInfo(true);
+            userContactQueryDTO.setExcludeMyGroup(true);
+        }
+        userContactQueryDTO.setOrderBy("updateTime desc");
+        userContactQueryDTO.setStatusArray(new Integer[]{
+                UserContactStatusEnum.FRIEND.getStatus(),
+                UserContactStatusEnum.DEL_BE.getStatus(),
+                UserContactStatusEnum.BLACKLIST_BE.getStatus(),
+        });
+        List<UserContactVO> userContactVOS = userContactService.listByParam(userContactQueryDTO);
+        return ResultUtils.success(userContactVOS);
     }
 }

@@ -36,6 +36,11 @@ public class UserContactVO implements Serializable {
     private String contactId;
 
     /**
+     * 联系人名字
+     */
+    private String contactName;
+
+    /**
      * 联系人类型 0:好友 1:群组
      */
     private Integer contactType;
