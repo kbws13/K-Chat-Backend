@@ -1,5 +1,7 @@
 package xyz.kbws.controller;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ArrayUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
@@ -16,6 +18,8 @@ import xyz.kbws.exception.ThrowUtils;
 import xyz.kbws.model.dto.userContact.UserContactAddRequest;
 import xyz.kbws.model.dto.userContact.UserContactQueryDTO;
 import xyz.kbws.model.dto.userContactApply.UserContactApplyDealWithRequest;
+import xyz.kbws.model.entity.User;
+import xyz.kbws.model.entity.UserContact;
 import xyz.kbws.model.entity.UserContactApply;
 import xyz.kbws.model.enums.UserContactStatusEnum;
 import xyz.kbws.model.enums.UserContactTypeEnum;
@@ -104,7 +108,7 @@ public class UserContactController {
         return ResultUtils.success("操作成功");
     }
 
-    @ApiOperation(value = "获取联系人")
+    @ApiOperation(value = "获取联系人列表")
     @GetMapping("/myContact/{contactType}")
     @AuthCheck
     public BaseResponse<List<UserContactVO>> myContact(HttpServletRequest request, @PathVariable("contactType") String contactType) {
@@ -130,5 +134,47 @@ public class UserContactController {
         });
         List<UserContactVO> userContactVOS = userContactService.listByParam(userContactQueryDTO);
         return ResultUtils.success(userContactVOS);
+    }
+
+    @ApiOperation(value = "获取其他用户信息")
+    @GetMapping("/getUserInfo/{contactId}")
+    @AuthCheck
+    public BaseResponse<UserVO> getUserInfo(@PathVariable("contactId") String contactId, HttpServletRequest request) {
+        UserVO userVOByToken = jwtUtils.getUserVOByToken(request);
+        User user = userService.getById(contactId);
+        UserVO userVO = new UserVO();
+        BeanUtil.copyProperties(user, userVO);
+        userVO.setContactStatus(UserContactStatusEnum.NOT_FRIEND.getStatus());
+
+        QueryWrapper<UserContact> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userId", userVOByToken.getUserId()).eq("contactId", contactId);
+        UserContact userContact = userContactService.getOne(queryWrapper);
+        if (userContact != null) {
+            userVO.setContactStatus(UserContactStatusEnum.FRIEND.getStatus());
+        }
+        return ResultUtils.success(userVO);
+    }
+
+    @ApiOperation(value = "获取联系人信息")
+    @GetMapping("/getContactInfo/{contactId}")
+    @AuthCheck
+    public BaseResponse<UserVO> getContactInfo(@PathVariable("contactId") String contactId, HttpServletRequest request) {
+        UserVO userVOByToken = jwtUtils.getUserVOByToken(request);
+        QueryWrapper<UserContact> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userId", userVOByToken.getUserId()).eq("contactId", contactId);
+        UserContact userContact = userContactService.getOne(queryWrapper);
+        if (userContact == null || !ArrayUtil.contains(new Integer[] {
+                UserContactStatusEnum.FRIEND.getStatus(),
+                UserContactStatusEnum.DEL_BE.getStatus(),
+                UserContactStatusEnum.BLACKLIST_BE.getStatus()
+        }, userContact.getStatus())) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR);
+        }
+
+        User user = userService.getById(contactId);
+        UserVO userVO = new UserVO();
+        BeanUtil.copyProperties(user, userVO);
+
+        return ResultUtils.success(userVO);
     }
 }
