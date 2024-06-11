@@ -3,6 +3,7 @@ package xyz.kbws.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import xyz.kbws.model.dto.userContact.UserContactQueryDTO;
 import xyz.kbws.model.entity.UserContact;
+import xyz.kbws.model.enums.UserContactStatusEnum;
 import xyz.kbws.model.vo.UserContactSearchResultVO;
 import xyz.kbws.model.vo.UserContactVO;
 import xyz.kbws.model.vo.UserVO;
@@ -38,4 +39,16 @@ public interface UserContactService extends IService<UserContact> {
      * @return
      */
     List<UserContactVO> listByParam(UserContactQueryDTO userContactQueryDTO);
+
+    /**
+     * 添加联系人
+     * @param applyUserId 申请人id
+     * @param receiveUserId 接收人id
+     * @param contactId 申请记录id
+     * @param contactType 联系人类型
+     * @param applyMessage 申请信息
+     */
+    void addUserContact(String applyUserId, String receiveUserId, String contactId, Integer contactType, String applyMessage);
+
+    Boolean updateContactStatus(String userId, String contactId, UserContactStatusEnum statusEnum);
 }

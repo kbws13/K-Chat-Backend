@@ -9,10 +9,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import xyz.kbws.annotation.AuthCheck;
-import xyz.kbws.common.BaseResponse;
-import xyz.kbws.common.ErrorCode;
-import xyz.kbws.common.PageRequest;
-import xyz.kbws.common.ResultUtils;
+import xyz.kbws.common.*;
 import xyz.kbws.exception.BusinessException;
 import xyz.kbws.exception.ThrowUtils;
 import xyz.kbws.model.dto.userContact.UserContactAddRequest;
@@ -176,5 +173,23 @@ public class UserContactController {
         BeanUtil.copyProperties(user, userVO);
 
         return ResultUtils.success(userVO);
+    }
+
+    @ApiOperation(value = "删除联系人")
+    @PostMapping("/deleteContact")
+    @AuthCheck
+    public BaseResponse<String> deleteContact(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
+        UserVO userVOByToken = jwtUtils.getUserVOByToken(request);
+        userContactService.updateContactStatus(userVOByToken.getUserId(), deleteRequest.getId(), UserContactStatusEnum.DEL);
+        return ResultUtils.success("删除成功");
+    }
+
+    @ApiOperation(value = "拉黑联系人")
+    @PostMapping("/blackContact")
+    @AuthCheck
+    public BaseResponse<String> blackContact(@RequestBody DeleteRequest blackRequest, HttpServletRequest request) {
+        UserVO userVOByToken = jwtUtils.getUserVOByToken(request);
+        userContactService.updateContactStatus(userVOByToken.getUserId(), blackRequest.getId(), UserContactStatusEnum.BLACKLIST);
+        return ResultUtils.success("拉黑成功");
     }
 }

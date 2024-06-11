@@ -2,25 +2,20 @@ package xyz.kbws.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.stereotype.Service;
 import xyz.kbws.common.ErrorCode;
-import xyz.kbws.common.SysSetting;
 import xyz.kbws.exception.BusinessException;
-import xyz.kbws.exception.ThrowUtils;
 import xyz.kbws.mapper.UserContactApplyMapper;
 import xyz.kbws.mapper.UserContactMapper;
 import xyz.kbws.model.entity.UserContact;
 import xyz.kbws.model.entity.UserContactApply;
 import xyz.kbws.model.enums.UserContactApplyStatusEnum;
 import xyz.kbws.model.enums.UserContactStatusEnum;
-import xyz.kbws.model.enums.UserContactTypeEnum;
 import xyz.kbws.model.vo.UserContactApplyVO;
-import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.service.UserContactApplyService;
-import org.springframework.stereotype.Service;
 import xyz.kbws.service.UserContactService;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -42,8 +37,6 @@ public class UserContactApplyServiceImpl extends ServiceImpl<UserContactApplyMap
     @Resource
     private UserContactMapper userContactMapper;
 
-    @Resource
-    private RedisComponent redisComponent;
 
     @Override
     public List<UserContactApplyVO> getUserContactApplyVO(String receiveId) {
@@ -71,7 +64,7 @@ public class UserContactApplyServiceImpl extends ServiceImpl<UserContactApplyMap
 
         if (UserContactApplyStatusEnum.PASS.getStatus().equals(status)) {
             // 添加联系人
-            this.addUserContact(apply.getApplyId(), apply.getReceiveId(), apply.getContactId(), apply.getContactType(), apply.getApplyInfo());
+            userContactService.addUserContact(apply.getApplyId(), apply.getReceiveId(), apply.getContactId(), apply.getContactType(), apply.getApplyInfo());
             return;
         }
 
@@ -97,41 +90,6 @@ public class UserContactApplyServiceImpl extends ServiceImpl<UserContactApplyMap
         }
     }
 
-    @Override
-    public void addUserContact(String applyUserId, String receiveUserId, String contactId, Integer contactType, String applyMessage) {
-        // 群聊人数
-        if (UserContactTypeEnum.GROUP.getType().equals(contactType)) {
-            QueryWrapper<UserContact> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("contactId", contactId);
-            Integer count = Math.toIntExact(userContactMapper.selectCount(queryWrapper));
-            SysSetting sysSetting = redisComponent.getSysSetting();
-            if (count >= sysSetting.getMaxGroupCount()) {
-                throw new BusinessException(ErrorCode.OPERATION_ERROR, "成员已满，无法加入");
-            }
-        }
-        // 同意双方添加好友
-        List<UserContact> contactList = new ArrayList<>();
-        // 申请人添加对方
-        UserContact userContact = new UserContact();
-        userContact.setUserId(applyUserId);
-        userContact.setContactId(contactId);
-        userContact.setContactType(contactType);
-        userContact.setStatus(UserContactStatusEnum.FRIEND.getStatus());
-        contactList.add(userContact);
-        // 如果是申请好友，接收人添加申请人，群组不用添加对方为好友
-        if (UserContactTypeEnum.GROUP.getType().equals(contactType)) {
-            userContact = new UserContact();
-            userContact.setUserId(receiveUserId);
-            userContact.setContactId(contactId);
-            userContact.setContactType(contactType);
-            userContact.setStatus(UserContactStatusEnum.FRIEND.getStatus());
-            contactList.add(userContact);
-        }
-        // 批量插入
-        userContactService.saveOrUpdateBatch(contactList);
-        // TODO 如果是好友，接收人也添加申请人为好友 添加缓存
-        // TODO 创建会话 发送消息
-    }
 }
 
 
