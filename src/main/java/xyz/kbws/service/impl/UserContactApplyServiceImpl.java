@@ -86,11 +86,11 @@ public class UserContactApplyServiceImpl extends ServiceImpl<UserContactApplyMap
                 userContact.setContactId(apply.getContactId());
                 userContact.setContactType(apply.getContactType());
                 userContact.setCreateTime(curDate);
-                userContact.setStatus(UserContactStatusEnum.BLACKLIST_BE.getStatus());
+                userContact.setStatus(UserContactStatusEnum.BLACKLIST_BE_FIRST.getStatus());
                 userContact.setUpdateTime(curDate);
                 userContactMapper.insert(userContact);
             } else {
-                userContact.setStatus(UserContactStatusEnum.BLACKLIST_BE.getStatus());
+                userContact.setStatus(UserContactStatusEnum.BLACKLIST_BE_FIRST.getStatus());
                 userContact.setUpdateTime(curDate);
                 userContactMapper.update(userContact, query);
             }

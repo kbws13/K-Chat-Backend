@@ -1,6 +1,7 @@
 package xyz.kbws.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -117,7 +118,10 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
 
         // 查询对方是否已经被添加为好友，如果被对方拉黑则无法添加
         UserContact userContact = userContactMapper.selectByUserIdAndContactId(receiveUserId, contactId);
-        if (userContact != null && UserContactStatusEnum.BLACKLIST_BE.getStatus().equals(userContact.getStatus())) {
+        if (userContact != null && ArrayUtil.contains(new Integer[]{
+                UserContactStatusEnum.BLACKLIST_BE.getStatus(),
+                UserContactStatusEnum.BLACKLIST_BE_FIRST.getStatus()
+        }, userContact.getStatus())) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "对方已将你拉黑，无法添加");
         }
         // 添加群组
