@@ -1,5 +1,7 @@
 package xyz.kbws.controller;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.crypto.SecureUtil;
 import com.wf.captcha.ArithmeticCaptcha;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -16,13 +18,17 @@ import xyz.kbws.exception.BusinessException;
 import xyz.kbws.exception.ThrowUtils;
 import xyz.kbws.model.dto.user.UserLoginRequest;
 import xyz.kbws.model.dto.user.UserRegisterRequest;
+import xyz.kbws.model.dto.user.UserUpdateRequest;
+import xyz.kbws.model.entity.User;
 import xyz.kbws.model.vo.CheckCodeVO;
 import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.redis.RedisUtils;
 import xyz.kbws.service.UserService;
+import xyz.kbws.utils.JwtUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.util.UUID;
 
 /**
@@ -44,6 +50,9 @@ public class UserController {
 
     @Resource
     private RedisComponent redisComponent;
+
+    @Resource
+    private JwtUtils jwtUtils;
 
     @ApiOperation(value = "生成验证码")
     @GetMapping("/checkCode")
@@ -88,6 +97,44 @@ public class UserController {
         } finally {
             redisUtils.delete(RedisConstant.CHECK_CODE + userLoginRequest.getCheckCodeKey());
         }
+    }
+
+    @ApiOperation(value = "退出登录")
+    @GetMapping("/logout")
+    public BaseResponse<String> logout(HttpServletRequest request) {
+        // TODO 退出登录 关闭 WebSocket 连接
+        return ResultUtils.success("退出登录成功");
+    }
+
+    @ApiOperation(value = "修改用户信息")
+    @PostMapping("/updateUser")
+    @AuthCheck
+    public BaseResponse<UserVO> updateUserInfo(@RequestBody UserUpdateRequest userUpdateRequest, HttpServletRequest request) {
+        UserVO userVOByToken = jwtUtils.getUserVOByToken(request);
+        userUpdateRequest.setUserId(userVOByToken.getUserId());
+        userService.updateUserInfo(userUpdateRequest);
+        return getCurrentUser(request);
+    }
+
+    @ApiOperation(value = "获取当前登录用户")
+    @GetMapping("/getCurrentUser")
+    @AuthCheck
+    public BaseResponse<UserVO> getCurrentUser(HttpServletRequest request) {
+        UserVO userVOByToken = jwtUtils.getUserVOByToken(request);
+        User user = userService.getById(userVOByToken.getUserId());
+        BeanUtil.copyProperties(user, userVOByToken);
+        return ResultUtils.success(userVOByToken);
+    }
+
+    @ApiOperation(value = "修改用户密码")
+    @PostMapping("/updatePwd")
+    public BaseResponse<String> updatePassword(HttpServletRequest request, @RequestParam String password) {
+        UserVO userVOByToken = jwtUtils.getUserVOByToken(request);
+        User user = userService.getById(userVOByToken.getUserId());
+        user.setPassword(SecureUtil.md5(password));
+        userService.updateById(user);
+        // TODO 强制退出，重新登录
+        return ResultUtils.success("修改成功，请重新登录");
     }
 
     @ApiOperation(value = "获取系统设置")

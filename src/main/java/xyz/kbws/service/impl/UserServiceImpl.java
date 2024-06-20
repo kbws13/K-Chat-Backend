@@ -15,6 +15,7 @@ import xyz.kbws.constant.CommonConstant;
 import xyz.kbws.exception.BusinessException;
 import xyz.kbws.mapper.UserBeautyMapper;
 import xyz.kbws.mapper.UserMapper;
+import xyz.kbws.model.dto.user.UserUpdateRequest;
 import xyz.kbws.model.entity.User;
 import xyz.kbws.model.entity.UserBeauty;
 import xyz.kbws.model.enums.BeautyAccountStatusEnum;
@@ -114,6 +115,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 保存登录信息到Redis中
         redisComponent.saveTokenUserVO(userVO);
         return userVO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateUserInfo(UserUpdateRequest userUpdateRequest) {
+        User dbUserInfo = userMapper.selectById(userUpdateRequest.getUserId());
+        User updateUser = new User();
+        BeanUtil.copyProperties(userUpdateRequest, updateUser);
+        userMapper.updateById(updateUser);
+        String contactNameUpdate = null;
+        if (!dbUserInfo.getNickName().equals(userUpdateRequest.getNickName())) {
+            contactNameUpdate = updateUser.getNickName();
+        }
+        // TODO 更新会话信息中的昵称信息
     }
 }
 
