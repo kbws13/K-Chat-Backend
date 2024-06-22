@@ -1,7 +1,9 @@
 package xyz.kbws.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
 import xyz.kbws.common.BaseResponse;
+import xyz.kbws.model.dto.user.UserQueryRequest;
 import xyz.kbws.model.dto.user.UserUpdateRequest;
 import xyz.kbws.model.entity.User;
 import xyz.kbws.model.vo.UserVO;
@@ -37,4 +39,12 @@ public interface UserService extends IService<User> {
      * @param userUpdateRequest 用户更新请求
      */
     void updateUserInfo(UserUpdateRequest userUpdateRequest);
+
+    /**
+     * 强制下线
+     * @param userId 用户id
+     */
+    void forceOffLine(String userId);
+
+    QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 }

@@ -6,6 +6,7 @@ import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.SecureUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.kbws.common.BaseResponse;
@@ -15,6 +16,7 @@ import xyz.kbws.constant.CommonConstant;
 import xyz.kbws.exception.BusinessException;
 import xyz.kbws.mapper.UserBeautyMapper;
 import xyz.kbws.mapper.UserMapper;
+import xyz.kbws.model.dto.user.UserQueryRequest;
 import xyz.kbws.model.dto.user.UserUpdateRequest;
 import xyz.kbws.model.entity.User;
 import xyz.kbws.model.entity.UserBeauty;
@@ -26,6 +28,7 @@ import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.service.UserService;
 import xyz.kbws.utils.JwtUtils;
+import xyz.kbws.utils.SqlUtils;
 
 import javax.annotation.Resource;
 
@@ -129,6 +132,57 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             contactNameUpdate = updateUser.getNickName();
         }
         // TODO 更新会话信息中的昵称信息
+    }
+
+    @Override
+    public void forceOffLine(String userId) {
+        // TODO  强制下线
+    }
+
+    @Override
+    public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
+        if (userQueryRequest == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "请求参数为空");
+        }
+        String userId = userQueryRequest.getUserId();
+        String userIdFuzzy = userQueryRequest.getUserIdFuzzy();
+        String email = userQueryRequest.getEmail();
+        String emailFuzzy = userQueryRequest.getEmailFuzzy();
+        String nickName = userQueryRequest.getNickName();
+        String nickNameFuzzy = userQueryRequest.getNickNameFuzzy();
+        Integer joinType = userQueryRequest.getJoinType();
+        Integer sex = userQueryRequest.getSex();
+        Integer status = userQueryRequest.getStatus();
+        String createTime = userQueryRequest.getCreateTime();
+        Long lastLoginTime = userQueryRequest.getLastLoginTime();
+        String areaName = userQueryRequest.getAreaName();
+        String areaNameFuzzy = userQueryRequest.getAreaNameFuzzy();
+        String areaCode = userQueryRequest.getAreaCode();
+        String areaCodeFuzzy = userQueryRequest.getAreaCodeFuzzy();
+        Long lastOffTime = userQueryRequest.getLastOffTime();
+        String sortField = userQueryRequest.getSortField();
+        String sortOrder = userQueryRequest.getSortOrder();
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(StringUtils.isNoneBlank(userId), "userId", userId);
+        queryWrapper.like(StringUtils.isNoneBlank(userIdFuzzy), "userId", userId);
+        queryWrapper.eq(StringUtils.isNoneBlank(email), "email", email);
+        queryWrapper.like(StringUtils.isNoneBlank(emailFuzzy), "email", emailFuzzy);
+        queryWrapper.eq(StringUtils.isNoneBlank(nickName), "nickName", nickName);
+        queryWrapper.like(StringUtils.isNoneBlank(nickNameFuzzy), "nickName", nickNameFuzzy);
+        queryWrapper.eq(joinType != null, "joinType", joinType);
+        queryWrapper.eq(sex != null, "sex", sex);
+        queryWrapper.eq(status != null, "status", status);
+        queryWrapper.eq(StringUtils.isNoneBlank(createTime), "createTime", createTime);
+        queryWrapper.eq(lastLoginTime != null, "lastLoginTime", lastLoginTime);
+        queryWrapper.eq(StringUtils.isNoneBlank(areaName), "areaName", areaName);
+        queryWrapper.like(StringUtils.isNoneBlank(areaNameFuzzy), "areaNameFuzzy", areaNameFuzzy);
+        queryWrapper.eq(StringUtils.isNoneBlank(areaCode), "areaCode", areaCode);
+        queryWrapper.like(StringUtils.isNoneBlank(areaCodeFuzzy), "areaCodeFuzzy", areaCodeFuzzy);
+        queryWrapper.eq(lastOffTime != null, "lastOffTime", lastOffTime);
+        queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
+                sortField);
+
+        return queryWrapper;
     }
 }
 
