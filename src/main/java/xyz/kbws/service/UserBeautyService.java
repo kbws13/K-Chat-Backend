@@ -2,6 +2,7 @@ package xyz.kbws.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.IService;
+import xyz.kbws.model.dto.userBeauty.UserBeautyAddDTO;
 import xyz.kbws.model.dto.userBeauty.UserBeautyQuery;
 import xyz.kbws.model.entity.UserBeauty;
 
@@ -11,6 +12,8 @@ import xyz.kbws.model.entity.UserBeauty;
  * @createDate 2024-04-24 14:40:17
  */
 public interface UserBeautyService extends IService<UserBeauty> {
+
+    void saveUserBeauty(UserBeautyAddDTO userBeautyAddDTO);
 
     QueryWrapper<UserBeauty> getQueryWrapper(UserBeautyQuery userBeautyQuery);
 

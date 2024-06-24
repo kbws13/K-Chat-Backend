@@ -13,6 +13,7 @@ import xyz.kbws.annotation.AuthCheck;
 import xyz.kbws.common.BaseResponse;
 import xyz.kbws.common.ResultUtils;
 import xyz.kbws.constant.UserConstant;
+import xyz.kbws.model.dto.userBeauty.UserBeautyAddDTO;
 import xyz.kbws.model.dto.userBeauty.UserBeautyQuery;
 import xyz.kbws.model.entity.UserBeauty;
 import xyz.kbws.service.UserBeautyService;
@@ -46,5 +47,13 @@ public class UserBeautyController {
         QueryWrapper<UserBeauty> queryWrapper = userBeautyService.getQueryWrapper(userBeautyQuery);
         Page<UserBeauty> page = userBeautyService.page(new Page<>(current, pageSize), queryWrapper);
         return ResultUtils.success(page);
+    }
+
+    @ApiOperation(value = "保存靓号")
+    @PostMapping("/add")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<String> addUserBeauty(@RequestBody UserBeautyAddDTO userBeautyAddDTO) {
+        userBeautyService.saveUserBeauty(userBeautyAddDTO);
+        return ResultUtils.success("保存成功");
     }
 }

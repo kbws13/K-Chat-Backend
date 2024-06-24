@@ -1,5 +1,7 @@
 package xyz.kbws.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.system.UserInfo;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.lang3.StringUtils;
@@ -8,10 +10,16 @@ import xyz.kbws.common.ErrorCode;
 import xyz.kbws.constant.CommonConstant;
 import xyz.kbws.exception.BusinessException;
 import xyz.kbws.mapper.UserBeautyMapper;
+import xyz.kbws.mapper.UserMapper;
+import xyz.kbws.model.dto.userBeauty.UserBeautyAddDTO;
 import xyz.kbws.model.dto.userBeauty.UserBeautyQuery;
+import xyz.kbws.model.entity.User;
 import xyz.kbws.model.entity.UserBeauty;
+import xyz.kbws.model.enums.BeautyAccountStatusEnum;
 import xyz.kbws.service.UserBeautyService;
 import xyz.kbws.utils.SqlUtils;
+
+import javax.annotation.Resource;
 
 /**
  * @author hsy
@@ -21,6 +29,66 @@ import xyz.kbws.utils.SqlUtils;
 @Service
 public class UserBeautyServiceImpl extends ServiceImpl<UserBeautyMapper, UserBeauty>
         implements UserBeautyService {
+
+    @Resource
+    private UserMapper userMapper;
+
+    @Override
+    public void saveUserBeauty(UserBeautyAddDTO beauty) {
+        if (beauty.getId() != null) {
+            UserBeauty dbInfo = this.getById(beauty.getId());
+            if (BeautyAccountStatusEnum.USED.getStatus().equals(dbInfo.getStatus())) {
+                //已经使用的不允许修改
+                throw new BusinessException(ErrorCode.OPERATION_ERROR);
+            }
+        }
+        //判断邮箱是否已经存在
+        QueryWrapper<UserBeauty> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("email", beauty.getEmail());
+        UserBeauty dbInfo = this.getOne(queryWrapper);
+        if (beauty.getId() == null && dbInfo != null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "靓号邮箱已经存在");
+        }
+
+        if (beauty.getId() != null && dbInfo != null && dbInfo.getId() != null && !beauty.getId().equals(dbInfo.getId())) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "靓号邮箱已经存在");
+        }
+
+        //判断靓号是否存在
+        QueryWrapper<UserBeauty> query = new QueryWrapper<>();
+        query.eq("userId", beauty.getUserId());
+        dbInfo = this.getOne(query);
+        if (beauty.getId() == null && dbInfo != null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "靓号已经存在");
+        }
+
+        if (beauty.getId() != null && dbInfo != null && dbInfo.getId() != null && !beauty.getId().equals(dbInfo.getId())) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR);
+        }
+
+        //判断邮箱是否已经注册
+        QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+        userQueryWrapper.eq("email", beauty.getEmail());
+        User userInfo = userMapper.selectOne(userQueryWrapper);
+        if (userInfo != null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "靓号邮箱已经被注册");
+        }
+
+        userInfo = this.userMapper.selectById(beauty.getUserId());
+        if (userInfo != null) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "靓号已经被注册");
+        }
+
+        if (beauty.getId() != null) {
+            UserBeauty userBeauty = new UserBeauty();
+            BeanUtil.copyProperties(beauty, userBeauty);
+            this.updateById(userBeauty);
+        } else {
+            UserBeauty userBeauty = new UserBeauty();
+            BeanUtil.copyProperties(beauty, userBeauty);
+            this.save(userBeauty);
+        }
+    }
 
     @Override
     public QueryWrapper<UserBeauty> getQueryWrapper(UserBeautyQuery userBeautyQuery) {
