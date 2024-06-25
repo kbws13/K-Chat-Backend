@@ -75,5 +75,6 @@ create table app_update
     status       tinyint(1)                         null comment '0:未发布 1:灰度发布 2:全部发布',
     grayscaleUid varchar(1000)                      null comment '灰度uid',
     fileType     tinyint(1)                         null comment '文件类型 0:本地文件 1:外链',
-    outerLink    varchar(200)                       null comment '外链地址'
+    outerLink    varchar(200)                       null comment '外链地址',
+    unique index idx_key(version)
 ) comment 'app发布表';

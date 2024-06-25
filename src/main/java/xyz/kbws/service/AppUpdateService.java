@@ -1,5 +1,7 @@
 package xyz.kbws.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import xyz.kbws.model.dto.appUpdate.AppUpdateQueryDTO;
 import xyz.kbws.model.entity.AppUpdate;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -10,4 +12,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface AppUpdateService extends IService<AppUpdate> {
 
+    void postUpdate(Integer id, Integer status, String grayscaleUid);
+
+    QueryWrapper<AppUpdate> getQueryWrapper(AppUpdateQueryDTO appUpdateQueryDTO);
 }
