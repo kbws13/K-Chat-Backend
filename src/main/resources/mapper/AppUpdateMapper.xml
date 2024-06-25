@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xyz.kbws.mapper.AppUpdateMapper">
+
+    <resultMap id="BaseResultMap" type="xyz.kbws.model.entity.AppUpdate">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="version" column="version" jdbcType="VARCHAR"/>
+            <result property="updateDesc" column="updateDesc" jdbcType="VARCHAR"/>
+            <result property="createTime" column="createTime" jdbcType="TIMESTAMP"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+            <result property="grayscaleUid" column="grayscaleUid" jdbcType="VARCHAR"/>
+            <result property="fileType" column="fileType" jdbcType="TINYINT"/>
+            <result property="outerLink" column="outerLink" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,version,updateDesc,
+        createTime,status,grayscaleUid,
+        fileType,outerLink
+    </sql>
+</mapper>

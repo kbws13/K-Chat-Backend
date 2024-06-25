@@ -46,11 +46,11 @@ create table user_contact
     contactId   varchar(12) not null comment '联系人id或者群组id',
     contactType tinyint(1)  null default null comment '联系人类型 0:好友 1:群组',
     createTime  datetime         default CURRENT_TIMESTAMP not null comment '创建时间',
-    status tinyint(1) null default null comment '状态 0:非好友 1:好友 2:已删除 3:拉黑',
-    updateTime   datetime     default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
-    primary key (userId, contactId) using btree ,
+    status      tinyint(1)  null default null comment '状态 0:非好友 1:好友 2:已删除 3:拉黑',
+    updateTime  datetime         default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    primary key (userId, contactId) using btree,
     index idx_contact_id (contactId) using btree
-)comment '联系人表';
+) comment '联系人表';
 
 create table user_contact_apply
 (
@@ -65,3 +65,15 @@ create table user_contact_apply
     unique index idx_key (applyId, receiveId, contactId),
     index idx_last_apply_time (lastApplyTime)
 ) comment '联系人申请表';
+
+create table app_update
+(
+    id           int primary key auto_increment comment 'id',
+    version      varchar(10)                        null comment '版本号',
+    updateDesc   varchar(500)                       null comment '更新信息',
+    createTime   datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    status       tinyint(1)                         null comment '0:未发布 1:灰度发布 2:全部发布',
+    grayscaleUid varchar(1000)                      null comment '灰度uid',
+    fileType     tinyint(1)                         null comment '文件类型 0:本地文件 1:外链',
+    outerLink    varchar(200)                       null comment '外链地址'
+) comment 'app发布表';
