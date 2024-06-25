@@ -4,7 +4,9 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,17 +18,24 @@ import xyz.kbws.constant.FileConstant;
 import xyz.kbws.exception.BusinessException;
 import xyz.kbws.mapper.GroupInfoMapper;
 import xyz.kbws.mapper.UserContactMapper;
+import xyz.kbws.model.dto.group.GroupInfoQueryDTO;
 import xyz.kbws.model.entity.GroupInfo;
+import xyz.kbws.model.entity.User;
 import xyz.kbws.model.entity.UserContact;
+import xyz.kbws.model.enums.GroupStatusEnum;
 import xyz.kbws.model.enums.UserContactStatusEnum;
 import xyz.kbws.model.enums.UserContactTypeEnum;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.service.GroupInfoService;
+import xyz.kbws.service.UserContactService;
+import xyz.kbws.service.UserService;
+import xyz.kbws.utils.SqlUtils;
 
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 /**
 * @author hsy
@@ -36,6 +45,12 @@ import java.util.Date;
 @Service
 public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo>
     implements GroupInfoService{
+
+    @Resource
+    private UserService userService;
+
+    @Resource
+    private UserContactService userContactService;
 
     @Resource
     private GroupInfoMapper groupInfoMapper;
@@ -99,6 +114,86 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
         String filePath = targetFileFolder.getPath() + "/" + groupInfo.getId() + FileConstant.IMAGE_SUFFIX;
         avatarFile.transferTo(new File(filePath));
         avatarCover.transferTo(new File(targetFileFolder.getPath() + "/" + groupInfo.getId() + FileConstant.COVER_IMAGE_SUFFIX));
+    }
+
+    @Override
+    public Page<GroupInfo> getGroupInfoByPage(GroupInfoQueryDTO groupInfoQueryDTO) {
+        Boolean queryGroupOwnerName = groupInfoQueryDTO.getQueryGroupOwnerName();
+        Boolean queryMemberCount = groupInfoQueryDTO.getQueryMemberCount();
+        Page<GroupInfo> page = this.page(new Page<>(groupInfoQueryDTO.getCurrent(), groupInfoQueryDTO.getPageSize()), getQueryWrapper(groupInfoQueryDTO));
+        List<GroupInfo> records = page.getRecords();
+        if (queryGroupOwnerName) {
+            for (GroupInfo record : records) {
+                User user = userService.getById(record.getOwnerId());
+                record.setGroupOwnerNickName(user.getNickName());
+            }
+        }
+        if (queryMemberCount) {
+            for (GroupInfo record : records) {
+                QueryWrapper<UserContact> query = new QueryWrapper<>();
+                query.eq("contactId", record.getId());
+                List<UserContact> userContacts = userContactMapper.selectList(query);
+                record.setMemberCount(userContacts.size());
+            }
+        }
+        page.setRecords(records);
+        return page;
+    }
+
+    @Override
+    public QueryWrapper<GroupInfo> getQueryWrapper(GroupInfoQueryDTO groupInfoQueryDTO) {
+        QueryWrapper<GroupInfo> queryWrapper = new QueryWrapper<>();
+        String groupId = groupInfoQueryDTO.getGroupId();
+        String groupIdFuzzy = groupInfoQueryDTO.getGroupIdFuzzy();
+        String groupName = groupInfoQueryDTO.getGroupName();
+        String groupNameFuzzy = groupInfoQueryDTO.getGroupNameFuzzy();
+        String groupOwnerId = groupInfoQueryDTO.getGroupOwnerId();
+        String groupOwnerIdFuzzy = groupInfoQueryDTO.getGroupOwnerIdFuzzy();
+        String groupNotice = groupInfoQueryDTO.getGroupNotice();
+        String groupNoticeFuzzy = groupInfoQueryDTO.getGroupNoticeFuzzy();
+        Integer joinType = groupInfoQueryDTO.getJoinType();
+        Integer status = groupInfoQueryDTO.getStatus();
+
+        String sortField = groupInfoQueryDTO.getSortField();
+        String sortOrder = groupInfoQueryDTO.getSortOrder();
+        queryWrapper.eq(StringUtils.isNoneBlank(groupId), "id", groupId);
+        queryWrapper.like(StringUtils.isNoneBlank(groupIdFuzzy), "id", groupId);
+        queryWrapper.eq(StringUtils.isNoneBlank(groupName), "name", groupName);
+        queryWrapper.like(StringUtils.isNoneBlank(groupNameFuzzy), "name", groupNameFuzzy);
+        queryWrapper.eq(StringUtils.isNoneBlank(groupOwnerId), "ownerId", groupOwnerId);
+        queryWrapper.like(StringUtils.isNoneBlank(groupOwnerIdFuzzy), "ownerId", groupOwnerIdFuzzy);
+        queryWrapper.eq(StringUtils.isNoneBlank(groupNotice), "notice", groupNotice);
+        queryWrapper.like(StringUtils.isNoneBlank(groupNoticeFuzzy), "notice", groupNoticeFuzzy);
+        queryWrapper.eq(joinType != null, "joinType", joinType);
+        queryWrapper.eq(status != null, "status", status);
+        queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
+                sortField);
+        return null;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void dissolutionGroup(String ownerId, String groupId) {
+        GroupInfo dbInfo = this.getById(groupId);
+        if (dbInfo == null || !dbInfo.getOwnerId().equals(ownerId)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR);
+        }
+        // 删除群组
+        dbInfo.setStatus(GroupStatusEnum.DISSOLUTION.getStatus());
+        this.updateById(dbInfo);
+
+        // 更新联系人信息
+        QueryWrapper<UserContact> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("contactId", groupId);
+        List<UserContact> userContacts = userContactMapper.selectList(queryWrapper);
+        for (UserContact userContact : userContacts) {
+            userContact.setStatus(UserContactStatusEnum.DEL.getStatus());
+        }
+        userContactService.updateBatchById(userContacts);
+
+        // TODO 移除相关群员的联系人缓存
+
+        // TODO 发消息 1.更新会话消息 2.记录群消息 3.发生解散通知消息
     }
 }
 

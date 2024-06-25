@@ -1,6 +1,9 @@
 package xyz.kbws.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.web.multipart.MultipartFile;
+import xyz.kbws.model.dto.group.GroupInfoQueryDTO;
 import xyz.kbws.model.entity.GroupInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -12,5 +15,34 @@ import java.io.IOException;
 * @createDate 2024-04-26 14:51:47
 */
 public interface GroupInfoService extends IService<GroupInfo> {
+
+    /**
+     * 保存群组
+     * @param groupInfo
+     * @param avatarFile
+     * @param avatarCover
+     * @throws IOException
+     */
     void save(GroupInfo groupInfo, MultipartFile avatarFile, MultipartFile avatarCover) throws IOException;
+
+    /**
+     * 分页查询
+     * @param groupInfoQueryDTO
+     * @return
+     */
+    Page<GroupInfo> getGroupInfoByPage(GroupInfoQueryDTO groupInfoQueryDTO);
+
+    /**
+     * 获取查询器
+     * @param groupInfoQueryDTO
+     * @return
+     */
+    QueryWrapper<GroupInfo> getQueryWrapper(GroupInfoQueryDTO groupInfoQueryDTO);
+
+    /**
+     * 解散群聊
+     * @param ownerId
+     * @param groupId
+     */
+    void dissolutionGroup(String ownerId, String groupId);
 }

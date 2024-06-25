@@ -1,14 +1,13 @@
 package xyz.kbws.model.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
-import java.util.Date;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+
+import java.io.Serializable;
+import java.util.Date;
 
 /**
  * 群组表
@@ -59,6 +58,12 @@ public class GroupInfo implements Serializable {
      */
     @TableField(exist = false)
     private Integer memberCount;
+
+    /**
+     * 群主名称
+     */
+    @TableField(exist = false)
+    private String groupOwnerNickName;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

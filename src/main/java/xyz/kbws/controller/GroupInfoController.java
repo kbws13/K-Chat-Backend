@@ -1,6 +1,7 @@
 package xyz.kbws.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -8,9 +9,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import xyz.kbws.annotation.AuthCheck;
 import xyz.kbws.common.BaseResponse;
+import xyz.kbws.common.DeleteRequest;
 import xyz.kbws.common.ErrorCode;
 import xyz.kbws.common.ResultUtils;
+import xyz.kbws.constant.UserConstant;
 import xyz.kbws.exception.BusinessException;
+import xyz.kbws.model.dto.group.GroupInfoQueryDTO;
 import xyz.kbws.model.entity.GroupInfo;
 import xyz.kbws.model.entity.UserContact;
 import xyz.kbws.model.enums.GroupStatusEnum;
@@ -118,5 +122,27 @@ public class GroupInfoController {
         groupInfoVO.setGroupInfo(groupInfo);
         groupInfoVO.setUserContactList(userContactList);
         return ResultUtils.success(groupInfoVO);
+    }
+
+    @ApiOperation(value = "加载群聊列表")
+    @PostMapping("/loadGroupInfo")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Page<GroupInfo>> loadGroupInfo(@RequestBody GroupInfoQueryDTO groupInfoQueryDTO) {
+        groupInfoQueryDTO.setQueryGroupOwnerName(true);
+        groupInfoQueryDTO.setQueryMemberCount(true);
+        Page<GroupInfo> result = groupInfoService.getGroupInfoByPage(groupInfoQueryDTO);
+        return ResultUtils.success(result);
+    }
+
+    @ApiOperation(value = "解散群聊")
+    @PostMapping("/dissolutionGroup")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<String> dissolutionGroup(@RequestBody DeleteRequest deleteRequest) {
+        GroupInfo groupInfo = groupInfoService.getById(deleteRequest.getId());
+        if (groupInfo == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        groupInfoService.dissolutionGroup(groupInfo.getOwnerId(), deleteRequest.getId());
+        return ResultUtils.success("解散成功");
     }
 }
