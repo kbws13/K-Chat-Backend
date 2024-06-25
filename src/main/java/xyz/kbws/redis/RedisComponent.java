@@ -43,4 +43,8 @@ public class RedisComponent {
         sysSetting = sysSetting == null ? new SysSetting() : sysSetting;
         return sysSetting;
     }
+
+    public void saveSysSetting(SysSetting sysSetting) {
+        redisUtils.set(RedisConstant.SYS_SETTING, sysSetting);
+    }
 }
