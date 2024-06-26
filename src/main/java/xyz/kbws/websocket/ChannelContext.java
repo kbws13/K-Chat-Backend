@@ -13,8 +13,10 @@ import io.netty.util.concurrent.GlobalEventExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import xyz.kbws.constant.CommonConstant;
+import xyz.kbws.mapper.ChatMessageMapper;
 import xyz.kbws.mapper.UserMapper;
 import xyz.kbws.model.dto.message.MessageSendDTO;
+import xyz.kbws.model.entity.ChatMessage;
 import xyz.kbws.model.entity.ChatSessionUser;
 import xyz.kbws.model.entity.User;
 import xyz.kbws.model.enums.MessageTypeEnum;
@@ -28,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * @author kbws
@@ -44,6 +47,9 @@ public class ChannelContext {
 
     @Resource
     private ChatSessionUserService chatSessionUserService;
+
+    @Resource
+    private ChatMessageMapper chatMessageMapper;
 
     @Resource
     private UserMapper userMapper;
@@ -87,10 +93,17 @@ public class ChannelContext {
         List<ChatSessionUser> chatSessionUserList = chatSessionUserService.list(queryWrapper);
 
         WsInitVO wsInitVO = new WsInitVO();
-        wsInitVO.setChatSessionUserList(chatSessionUserList);
+        wsInitVO.setChatSessionList(chatSessionUserList);
 
         // 2.查询聊天消息
-        wsInitVO.setChatMessageList(new ArrayList<>());
+        // 查询所有联系人
+        List<String> groupIdList = contactIdList.stream().filter(item -> item.startsWith(UserContactTypeEnum.GROUP.getPrefix())).collect(Collectors.toList());
+        groupIdList.add(userId);
+        QueryWrapper<ChatMessage> query = new QueryWrapper<>();
+        query.in("contactId", groupIdList);
+        query.ge("sendTime", lastOfTime);
+        List<ChatMessage> chatMessageList = chatMessageMapper.selectList(query);
+        wsInitVO.setChatMessageList(chatMessageList);
 
         // 3.查询好友申请
         wsInitVO.setApplyCount(0);

@@ -15,7 +15,7 @@ import java.util.List;
 @Data
 public class WsInitVO implements Serializable {
 
-    private List<ChatSessionUser> chatSessionUserList;
+    private List<ChatSessionUser> chatSessionList;
 
     private List<ChatMessage> chatMessageList;
 

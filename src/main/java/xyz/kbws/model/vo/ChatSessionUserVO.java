@@ -1,6 +1,7 @@
 package xyz.kbws.model.vo;
 
 import lombok.Data;
+import xyz.kbws.model.enums.UserContactTypeEnum;
 
 import java.io.Serializable;
 
@@ -33,6 +34,10 @@ public class ChatSessionUserVO implements Serializable {
     private Integer memberCount;
 
     private Integer contactType;
+
+    public Integer getContactType() {
+        return UserContactTypeEnum.getByPrefix(contactId).getType();
+    }
 
     private static final long serialVersionUID = -4878891743443654360L;
 }
