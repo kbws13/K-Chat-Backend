@@ -33,7 +33,7 @@ public class RedisComponent {
      * @param userId
      */
     public void saveUserHeartBeat(String userId) {
-        redisUtils.setex(RedisConstant.WS_USER_HEART_BEAT + userId, System.currentTimeMillis(), RedisConstant.EXPIRES_HEART_BEAT)
+        redisUtils.setex(RedisConstant.WS_USER_HEART_BEAT + userId, System.currentTimeMillis(), RedisConstant.EXPIRES_HEART_BEAT);
     }
 
     /**
