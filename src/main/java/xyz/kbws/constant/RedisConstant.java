@@ -11,7 +11,7 @@ public interface RedisConstant {
 
     String CHECK_CODE = "kchat:checkcode:";
 
-    String WS_USER_USER_HEART_BEAT = "kchat:ws:user:heartbeat:";
+    String WS_USER_HEART_BEAT = "kchat:ws:user:heartbeat:";
 
     String WS_TOKEN = "kchat:ws:token:";
 
@@ -24,4 +24,6 @@ public interface RedisConstant {
     Integer TIME_1MIN = 60;
 
     Integer TIME_1DAY = TIME_1MIN * 60 * 24;
+
+    Integer EXPIRES_HEART_BEAT = 6;
 }

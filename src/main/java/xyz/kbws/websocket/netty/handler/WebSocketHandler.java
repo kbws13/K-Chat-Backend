@@ -7,10 +7,13 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
+import xyz.kbws.websocket.ChannelContext;
 
 import javax.annotation.Resource;
 
@@ -26,6 +29,9 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<TextWebSocketF
 
     @Resource
     private RedisComponent redisComponent;
+
+    @Resource
+    private ChannelContext channelContext;
 
     /**
      * 通道就绪后调用，一般用户来做初始化
@@ -51,7 +57,11 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<TextWebSocketF
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, TextWebSocketFrame textWebSocketFrame) throws Exception {
         Channel channel = channelHandlerContext.channel();
-        log.info("收到消息：{}", textWebSocketFrame.text());
+        Attribute<String> attributeKey = channel.attr(AttributeKey.valueOf(channel.id().toString()));
+        String userId = attributeKey.get();
+        log.info("收到{}的消息：{}", userId, textWebSocketFrame.text());
+        redisComponent.saveUserHeartBeat(userId);
+        channelContext.sendToGroup(textWebSocketFrame.text());
     }
 
     @Override
@@ -69,6 +79,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<TextWebSocketF
                 ctx.channel().close();
                 return;
             }
+            channelContext.addContext(tokenUserVO.getUserId(), ctx.channel());
         }
     }
 

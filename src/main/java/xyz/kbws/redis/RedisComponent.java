@@ -25,7 +25,15 @@ public class RedisComponent {
      * @return 时间戳
      */
     public Long getUserHeartBeat(String userId) {
-        return (Long) redisUtils.get(RedisConstant.WS_USER_USER_HEART_BEAT + userId);
+        return (Long) redisUtils.get(RedisConstant.WS_USER_HEART_BEAT + userId);
+    }
+
+    /**
+     * 保存最后的心跳时间
+     * @param userId
+     */
+    public void saveUserHeartBeat(String userId) {
+        redisUtils.setex(RedisConstant.WS_USER_HEART_BEAT + userId, System.currentTimeMillis(), RedisConstant.EXPIRES_HEART_BEAT)
     }
 
     /**
