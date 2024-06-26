@@ -11,7 +11,14 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
+import xyz.kbws.config.AppConfig;
+import xyz.kbws.websocket.netty.handler.HeartBeatHandler;
+import xyz.kbws.websocket.netty.handler.WebSocketHandler;
 
+import javax.annotation.PreDestroy;
+import javax.annotation.Resource;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -20,6 +27,7 @@ import java.util.concurrent.TimeUnit;
  * @description: Netty 访问启动入口
  */
 @Slf4j
+@Component
 public class NettyWebSocketStarter {
 
     // 定义两个线程组
@@ -28,7 +36,20 @@ public class NettyWebSocketStarter {
     // 处理消息的线程组
     private static EventLoopGroup workGroup = new NioEventLoopGroup();
 
-    public static void main(String[] args) {
+    @Resource
+    private WebSocketHandler webSocketHandler;
+
+    @Resource
+    private AppConfig appConfig;
+
+    @PreDestroy
+    public void close() {
+        boosGroup.shutdownGracefully();
+        workGroup.shutdownGracefully();
+    }
+
+    @Async
+    public void startNetty() {
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.group(boosGroup, workGroup);
@@ -48,12 +69,12 @@ public class NettyWebSocketStarter {
                             pipeline.addLast(new IdleStateHandler(60,  0, 0, TimeUnit.SECONDS));
                             pipeline.addLast(new HeartBeatHandler());
                             // 将 HTTP 协议升级为 WebSocket 协议，对 WebSocket 支持
-                            pipeline.addLast(new WebSocketServerProtocolHandler("/ws"));
-                            pipeline.addLast(new WebSocketHandler());
+                            pipeline.addLast(new WebSocketServerProtocolHandler("/ws", null, true, 64*1024, true, true, 10000L));
+                            pipeline.addLast(webSocketHandler);
                         }
                     });
-            ChannelFuture channelFuture = serverBootstrap.bind(5051).sync();
-            log.info("Netty 启动成功");
+            ChannelFuture channelFuture = serverBootstrap.bind(appConfig.getWsPort()).sync();
+            log.info("Netty 服务启动成功，端口：{}", appConfig.getWsPort());
             channelFuture.channel().closeFuture().sync();
 
         } catch (InterruptedException e) {

@@ -35,7 +35,11 @@ public class RedisComponent {
      */
     public void saveTokenUserVO(UserVO userVO) {
         redisUtils.setex(RedisConstant.WS_TOKEN + userVO.getToken(), userVO, RedisConstant.TIME_1DAY * 2);
-        redisUtils.setex(RedisConstant.WS_TOKEN_USERID + userVO.getToken(), userVO.getToken(), RedisConstant.TIME_1DAY * 2);
+        redisUtils.setex(RedisConstant.WS_TOKEN_USERID + userVO.getUserId(), userVO.getToken(), RedisConstant.TIME_1DAY * 2);
+    }
+
+    public UserVO getTokenUserVO(String token) {
+        return (UserVO) redisUtils.get(RedisConstant.WS_TOKEN + token);
     }
 
     public SysSetting getSysSetting() {

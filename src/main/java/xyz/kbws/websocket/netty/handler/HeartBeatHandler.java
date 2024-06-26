@@ -1,4 +1,4 @@
-package xyz.kbws.websocket.netty;
+package xyz.kbws.websocket.netty.handler;
 
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
