@@ -14,15 +14,9 @@ import xyz.kbws.common.ErrorCode;
 import xyz.kbws.common.SysSetting;
 import xyz.kbws.constant.UserConstant;
 import xyz.kbws.exception.BusinessException;
-import xyz.kbws.mapper.GroupInfoMapper;
-import xyz.kbws.mapper.UserContactApplyMapper;
-import xyz.kbws.mapper.UserContactMapper;
-import xyz.kbws.mapper.UserMapper;
+import xyz.kbws.mapper.*;
 import xyz.kbws.model.dto.userContact.UserContactQueryDTO;
-import xyz.kbws.model.entity.GroupInfo;
-import xyz.kbws.model.entity.User;
-import xyz.kbws.model.entity.UserContact;
-import xyz.kbws.model.entity.UserContactApply;
+import xyz.kbws.model.entity.*;
 import xyz.kbws.model.enums.*;
 import xyz.kbws.model.vo.UserContactSearchResultVO;
 import xyz.kbws.model.vo.UserContactVO;
@@ -30,9 +24,11 @@ import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.service.UserContactApplyService;
 import xyz.kbws.service.UserContactService;
+import xyz.kbws.utils.StringUtil;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -60,6 +56,15 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
 
     @Resource
     private UserContactApplyMapper userContactApplyMapper;
+
+    @Resource
+    private ChatSessionMapper chatSessionMapper;
+
+    @Resource
+    private ChatSessionUserMapper chatSessionUserMapper;
+
+    @Resource
+    private ChatMessageMapper chatMessageMapper;
 
     @Resource
     private RedisComponent redisComponent;
@@ -242,6 +247,61 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
         // TODO 从我的好友列表缓存中删除
         // TODO 从好友列表缓存中删除我
         return true;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void addContactRobot(String userId) {
+        Date curDate = new Date();
+        SysSetting sysSetting = redisComponent.getSysSetting();
+        String robotUid = sysSetting.getRobotUid();
+        String robotNickName = sysSetting.getRobotNickName();
+        String robotWelcome = sysSetting.getRobotWelcome();
+        robotWelcome = cleanHtmlTag(robotWelcome);
+        // 增加机器人好友
+        UserContact userContact = new UserContact();
+        userContact.setUserId(userId);
+        userContact.setContactId(robotUid);
+        userContact.setContactType(UserContactTypeEnum.USER.getType());
+        userContact.setStatus(UserContactStatusEnum.FRIEND.getStatus());
+        userContactMapper.insert(userContact);
+        // 增加会话信息
+        String sessionId = StringUtil.getChatSession(new String[]{userId, robotUid});
+        ChatSession chatSession = new ChatSession();
+        chatSession.setLastMessage(robotWelcome);
+        chatSession.setSessionId(sessionId);
+        chatSession.setLastReceiveTime(curDate.getTime());
+        this.chatSessionMapper.insert(chatSession);
+        // 增加联系人
+        ChatSessionUser chatSessionUser = new ChatSessionUser();
+        chatSessionUser.setUserId(userId);
+        chatSessionUser.setContactId(robotUid);
+        chatSessionUser.setSessionId(sessionId);
+        chatSessionUser.setContactName(robotNickName);
+        this.chatSessionUserMapper.insert(chatSessionUser);
+        // 增加聊天信息
+        ChatMessage chatMessage = new ChatMessage();
+        chatMessage.setSessionId(sessionId);
+        chatMessage.setType(MessageTypeEnum.CHAT.getType());
+        chatMessage.setContent(robotWelcome);
+        chatMessage.setSendUserId(robotUid);
+        chatMessage.setSendUserNickName(robotNickName);
+        chatMessage.setSendTime(curDate.getTime());
+        chatMessage.setContactId(userId);
+        chatMessage.setContactType(UserContactTypeEnum.USER.getType());
+        chatMessage.setStatus(MessageStatusEnum.SENDED.getStatus());
+        chatMessageMapper.insert(chatMessage);
+
+    }
+
+    public static String cleanHtmlTag(String content) {
+        if (StrUtil.isEmpty(content)) {
+            return content;
+        }
+        content = content.replace("<", "&lt;");
+        content = content.replace("\r\n", "<br>");
+        content = content.replace("\n", "<br>");
+        return content;
     }
 }
 

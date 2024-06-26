@@ -51,4 +51,6 @@ public interface UserContactService extends IService<UserContact> {
     void addUserContact(String applyUserId, String receiveUserId, String contactId, Integer contactType, String applyMessage);
 
     Boolean updateContactStatus(String userId, String contactId, UserContactStatusEnum statusEnum);
+
+    void addContactRobot(String userId);
 }

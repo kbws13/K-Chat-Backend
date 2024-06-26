@@ -25,6 +25,7 @@ import xyz.kbws.model.entity.UserContact;
 import xyz.kbws.model.enums.*;
 import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
+import xyz.kbws.service.UserContactService;
 import xyz.kbws.service.UserService;
 import xyz.kbws.utils.JwtUtils;
 import xyz.kbws.utils.SqlUtils;
@@ -41,6 +42,9 @@ import java.util.stream.Collectors;
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         implements UserService {
+
+    @Resource
+    private UserContactService userContactService;
 
     @Resource
     private UserMapper userMapper;
@@ -88,7 +92,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             beautyAccount.setStatus(BeautyAccountStatusEnum.USED.getStatus());
             userBeautyMapper.updateById(beautyAccount);
         }
-        // TODO 创建机器人好友
+        // 创建机器人好友
+        userContactService.addContactRobot(user.getUserId());
         if (insert != 0) {
             return ResultUtils.success("注册成功");
         } else {

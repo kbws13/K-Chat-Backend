@@ -15,4 +15,32 @@
         userId,contactId,sessionId,
         contactName
     </sql>
+
+    <sql id="base_condition_filed">
+        <if test="query.userId != null and query.userId!=''">
+            and user_id = #{query.userId}
+        </if>
+        <if test="query.contactId != null and query.contactId!=''">
+            and contact_id = #{query.contactId}
+        </if>
+        <if test="query.sessionId != null and query.sessionId!=''">
+            and session_id = #{query.sessionId}
+        </if>
+        <if test="query.contactName != null and query.contactName!=''">
+            and contact_name = #{query.contactName}
+        </if>
+    </sql>
+
+    <!-- 查询集合-->
+    <select id="selectVO" resultType="xyz.kbws.model.vo.ChatSessionUserVO">
+        SELECT u.*,
+        c.lastMessage lastMessage,
+        c.lastReceiveTime lastReceiveTime,
+        case when SUBSTRING(contactId, 1, 1) ='G'
+            THEN (select count(1) from user_contact uc where uc.contactId = u.contactId)
+        else 0
+        end memberCount
+        FROM chat_session_user u inner join chat_session c on c.sessionId = u.sessionId
+        <include refid="base_condition_filed"/>
+    </select>
 </mapper>

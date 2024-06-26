@@ -1,7 +1,11 @@
 package xyz.kbws.mapper;
 
-import xyz.kbws.model.entity.ChatSessionUser;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Param;
+import xyz.kbws.model.entity.ChatSessionUser;
+import xyz.kbws.model.vo.ChatSessionUserVO;
+
+import java.util.List;
 
 /**
 * @author hsy
@@ -10,7 +14,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @Entity xyz.kbws.model.entity.ChatSessionUser
 */
 public interface ChatSessionUserMapper extends BaseMapper<ChatSessionUser> {
-
+    List<ChatSessionUserVO> selectVO(@Param("query") ChatSessionUser chatSessionUser);
 }
 
 

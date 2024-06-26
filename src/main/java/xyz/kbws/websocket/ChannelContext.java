@@ -1,6 +1,7 @@
 package xyz.kbws.websocket;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import io.netty.channel.Channel;
 import io.netty.channel.group.ChannelGroup;
@@ -13,14 +14,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import xyz.kbws.constant.CommonConstant;
 import xyz.kbws.mapper.UserMapper;
+import xyz.kbws.model.dto.message.MessageSendDTO;
 import xyz.kbws.model.entity.ChatSessionUser;
 import xyz.kbws.model.entity.User;
+import xyz.kbws.model.enums.MessageTypeEnum;
 import xyz.kbws.model.enums.UserContactTypeEnum;
 import xyz.kbws.model.vo.WsInitVO;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.service.ChatSessionUserService;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -86,16 +90,33 @@ public class ChannelContext {
         wsInitVO.setChatSessionUserList(chatSessionUserList);
 
         // 2.查询聊天消息
-
+        wsInitVO.setChatMessageList(new ArrayList<>());
 
         // 3.查询好友申请
+        wsInitVO.setApplyCount(0);
+        // 发送消息
+        MessageSendDTO messageSendDTO = new MessageSendDTO();
+        messageSendDTO.setMessageType(MessageTypeEnum.INIT.getType());
+        messageSendDTO.setContactId(userId);
+        messageSendDTO.setExtentData(wsInitVO);
+        sendMessage(messageSendDTO, userId);
     }
 
     /**
      * 发送消息
      */
-    public static void sendMessage() {
-
+    public static void sendMessage(MessageSendDTO messageSendDTO, String receiveId) {
+        if (receiveId == null) {
+            return;
+        }
+        Channel sendChannel = USER_CONTEXT_MAP.get(receiveId);
+        if (sendChannel == null) {
+            return;
+        }
+        // 相对于客户端而言，联系人就是发送人，这里要转一下再发送
+        messageSendDTO.setContactId(messageSendDTO.getSendUserId());
+        messageSendDTO.setContactName(messageSendDTO.getSendUserNickName());
+        sendChannel.writeAndFlush(new TextWebSocketFrame(JSONUtil.toJsonStr(messageSendDTO)));
     }
 
     private void addToGroup(String groupId, Channel channel) {

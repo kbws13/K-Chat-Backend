@@ -60,7 +60,6 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<TextWebSocketF
         Channel channel = channelHandlerContext.channel();
         Attribute<String> attributeKey = channel.attr(AttributeKey.valueOf(channel.id().toString()));
         String userId = attributeKey.get();
-        log.info("收到{}的消息：{}", userId, textWebSocketFrame.text());
         redisComponent.saveUserHeartBeat(userId);
     }
 

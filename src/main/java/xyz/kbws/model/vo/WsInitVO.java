@@ -1,6 +1,7 @@
 package xyz.kbws.model.vo;
 
 import lombok.Data;
+import xyz.kbws.model.entity.ChatMessage;
 import xyz.kbws.model.entity.ChatSessionUser;
 
 import java.io.Serializable;
@@ -15,6 +16,8 @@ import java.util.List;
 public class WsInitVO implements Serializable {
 
     private List<ChatSessionUser> chatSessionUserList;
+
+    private List<ChatMessage> chatMessageList;
 
     private Integer applyCount;
 
