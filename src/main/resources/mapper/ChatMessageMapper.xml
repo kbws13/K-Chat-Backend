@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="xyz.kbws.mapper.ChatMessageMapper">
+
+    <resultMap id="BaseResultMap" type="xyz.kbws.model.entity.ChatMessage">
+            <id property="id" column="id" jdbcType="INTEGER"/>
+            <result property="sessionId" column="sessionId" jdbcType="VARCHAR"/>
+            <result property="type" column="type" jdbcType="TINYINT"/>
+            <result property="content" column="content" jdbcType="VARCHAR"/>
+            <result property="sendUserId" column="sendUserId" jdbcType="VARCHAR"/>
+            <result property="sendUserNickName" column="sendUserNickName" jdbcType="VARCHAR"/>
+            <result property="sendTime" column="sendTime" jdbcType="BIGINT"/>
+            <result property="contactId" column="contactId" jdbcType="VARCHAR"/>
+            <result property="contactType" column="contactType" jdbcType="TINYINT"/>
+            <result property="fileSize" column="fileSize" jdbcType="BIGINT"/>
+            <result property="fileName" column="fileName" jdbcType="VARCHAR"/>
+            <result property="fileType" column="fileType" jdbcType="TINYINT"/>
+            <result property="status" column="status" jdbcType="TINYINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id,sessionId,type,
+        content,sendUserId,sendUserNickName,
+        sendTime,contactId,contactType,
+        fileSize,fileName,fileType,
+        status
+    </sql>
+</mapper>

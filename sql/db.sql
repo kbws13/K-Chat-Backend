@@ -76,5 +76,44 @@ create table app_update
     grayscaleUid varchar(1000)                      null comment '灰度uid',
     fileType     tinyint(1)                         null comment '文件类型 0:本地文件 1:外链',
     outerLink    varchar(200)                       null comment '外链地址',
-    unique index idx_key(version)
+    unique index idx_key (version)
 ) comment 'app发布表';
+
+create table chat_session
+(
+    sessionId       varchar(32) primary key not null comment '会话id',
+    lastMessage     varchar(500)            null comment '最后接收的消息',
+    lastReceiveTime bigint(11)              null comment '最后接收消息时间(毫秒)'
+) comment '会话信息表';
+
+create table chat_message
+(
+    id               int auto_increment primary key comment 'id',
+    sessionId        varchar(32)  not null comment '会话id',
+    type             tinyint(1)   not null comment '消息类型',
+    content          varchar(500) null comment '消息内容',
+    sendUserId       varchar(12)  null comment '发送人id',
+    sendUserNickName varchar(20)  null comment '发送人昵称',
+    sendTime         bigint(20)   null comment '发送时间',
+    contactId        varchar(12)  not null comment '联系人id',
+    contactType      tinyint(1)   null comment '联系人类型 0:单聊 1:群聊',
+    fileSize         bigint(20)   null comment '文件大小',
+    fileName         varchar(200) null comment '文件名',
+    fileType         tinyint(1)   null comment '文件类型',
+    status           tinyint(1)   null comment '状态 0:正在发送 1:已发送',
+    index idx_session_id (sessionId) using btree,
+    index idx_send_user_id (sendUserId) using btree,
+    index idx_receive_contact_id (contactId) using btree,
+    index idx_send_time (sendTime) using btree
+) comment '聊天消息表';
+
+create table chat_session_user
+(
+    userId      varchar(12) not null comment '用户id',
+    contactId   varchar(12) not null comment '联系人id',
+    sessionId   varchar(32) not null comment '会话id',
+    contactName varchar(20) null comment '联系人名称',
+    primary key (userId, contactId) using btree,
+    index idx_user_id (userId) using btree,
+    index idx_session_id (sessionId) using btree
+) comment '会话用户表';

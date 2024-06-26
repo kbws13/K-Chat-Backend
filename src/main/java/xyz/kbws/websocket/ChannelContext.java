@@ -8,9 +8,14 @@ import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import xyz.kbws.mapper.UserMapper;
+import xyz.kbws.model.entity.User;
+import xyz.kbws.model.enums.UserContactTypeEnum;
 import xyz.kbws.redis.RedisComponent;
 
 import javax.annotation.Resource;
+import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -27,6 +32,9 @@ public class ChannelContext {
     private static final ConcurrentHashMap<String, ChannelGroup> GROUP_CONTEXT_MAP = new ConcurrentHashMap<>();
 
     @Resource
+    private UserMapper userMapper;
+
+    @Resource
     private RedisComponent redisComponent;
 
     public void addContext(String userId, Channel channel) {
@@ -39,11 +47,18 @@ public class ChannelContext {
             attributeKey = AttributeKey.valueOf(channelId);
         }
         channel.attr(attributeKey).set(userId);
+        List<String> contactIdList = redisComponent.getUserContactList(userId);
+        for (String groupId : contactIdList) {
+            if (groupId.startsWith(UserContactTypeEnum.GROUP.getPrefix())) {
+                addToGroup(groupId, channel);
+            }
+        }
         USER_CONTEXT_MAP.put(userId, channel);
         redisComponent.saveUserHeartBeat(userId);
-
-        String groupId = "10000";
-        addToGroup(groupId, channel);
+        // 更新用户最后登录时间
+        User user = userMapper.selectById(userId);
+        user.setLastLoginTime(new Date());
+        userMapper.updateById(user);
     }
 
     private void addToGroup(String groupId, Channel channel) {
@@ -58,8 +73,4 @@ public class ChannelContext {
         group.add(channel);
     }
 
-    public void sendToGroup(String message) {
-        ChannelGroup group = GROUP_CONTEXT_MAP.get("10000");
-        group.writeAndFlush(new TextWebSocketFrame(message));
-    }
 }

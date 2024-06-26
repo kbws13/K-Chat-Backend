@@ -15,15 +15,14 @@ import xyz.kbws.common.ResultUtils;
 import xyz.kbws.constant.CommonConstant;
 import xyz.kbws.exception.BusinessException;
 import xyz.kbws.mapper.UserBeautyMapper;
+import xyz.kbws.mapper.UserContactMapper;
 import xyz.kbws.mapper.UserMapper;
 import xyz.kbws.model.dto.user.UserQueryRequest;
 import xyz.kbws.model.dto.user.UserUpdateRequest;
 import xyz.kbws.model.entity.User;
 import xyz.kbws.model.entity.UserBeauty;
-import xyz.kbws.model.enums.BeautyAccountStatusEnum;
-import xyz.kbws.model.enums.JoinTypeEnum;
-import xyz.kbws.model.enums.UserContactTypeEnum;
-import xyz.kbws.model.enums.UserStatusEnum;
+import xyz.kbws.model.entity.UserContact;
+import xyz.kbws.model.enums.*;
 import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.service.UserService;
@@ -31,6 +30,8 @@ import xyz.kbws.utils.JwtUtils;
 import xyz.kbws.utils.SqlUtils;
 
 import javax.annotation.Resource;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author hsy
@@ -43,6 +44,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Resource
     private UserMapper userMapper;
+
+    @Resource
+    private UserContactMapper userContactMapper;
 
     @Resource
     private UserBeautyMapper userBeautyMapper;
@@ -108,8 +112,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (lastHeartBeat != null) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "此账号已经在别处登录，请退出后再登录");
         }
-        // TODO 查询我的群组和我的联系人
-        // TODO 查询我的联系人
+        // 查询我的联系人
+        QueryWrapper<UserContact> query = new QueryWrapper<>();
+        query.eq("userId", user.getUserId());
+        query.eq("status", UserContactStatusEnum.FRIEND.getStatus());
+        List<UserContact> userContacts = userContactMapper.selectList(query);
+        List<String> contactList = userContacts.stream().map(UserContact::getContactId).collect(Collectors.toList());
+        redisComponent.cleanUserContact(user.getUserId());
+        if (!contactList.isEmpty()) {
+            redisComponent.addUserContactBatch(user.getUserId(), contactList);
+        }
         UserVO userVO = new UserVO();
         BeanUtil.copyProperties(user, userVO);
         // 生成Token

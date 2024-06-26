@@ -6,6 +6,7 @@ import xyz.kbws.constant.RedisConstant;
 import xyz.kbws.model.vo.UserVO;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * @author kbws
@@ -56,7 +57,58 @@ public class RedisComponent {
         return sysSetting;
     }
 
+    /**
+     * 保存系统设置
+     * @param sysSetting
+     */
     public void saveSysSetting(SysSetting sysSetting) {
         redisUtils.set(RedisConstant.SYS_SETTING, sysSetting);
+    }
+
+    /**
+     * 获取用户联系人
+     * @param userId
+     * @return
+     */
+    public List<String> getUserContactList(String userId) {
+        return redisUtils.getQueueList(RedisConstant.USER_CONTACT + userId);
+    }
+
+    /**
+     * 添加用户联系人
+     * @param userId
+     * @param contactId
+     */
+    public void addUserContact(String userId, String contactId) {
+        List<String> contactList = redisUtils.getQueueList(RedisConstant.USER_CONTACT + userId);
+        if (!contactList.contains(contactId)) {
+            redisUtils.listPush(RedisConstant.USER_CONTACT + userId, contactId, RedisConstant.TIME_1DAY * 2);
+        }
+    }
+
+    /**
+     * 清空用户联系人
+     * @param userId
+     */
+    public void cleanUserContact(String userId) {
+        redisUtils.delete(RedisConstant.USER_CONTACT + userId);
+    }
+
+    /**
+     * 删除用户联系人
+     * @param userId
+     * @param contactId
+     */
+    public void removeUserContact(String userId, String contactId) {
+        redisUtils.remove(RedisConstant.USER_CONTACT + userId, contactId);
+    }
+
+    /**
+     * 批量添加用户联系人
+     * @param userId
+     * @param contactIdList
+     */
+    public void addUserContactBatch(String userId, List<String> contactIdList) {
+        redisUtils.listPushAll(RedisConstant.USER_CONTACT + userId, contactIdList, RedisConstant.TIME_1DAY * 2);
     }
 }
