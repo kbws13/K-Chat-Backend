@@ -20,4 +20,9 @@ public interface CommonConstant {
      */
     Integer LENGTH_11 = 11;
 
+    /**
+     * 三天
+     */
+    Long MILLISECOND_3DAYS_AGO = 3 * 24 * 60 * 60 * 1000L;
+
 }

@@ -38,6 +38,14 @@ public class RedisComponent {
     }
 
     /**
+     * 删除用户心跳
+     * @param userId
+     */
+    public void removeUserHeartBeat(String userId) {
+        redisUtils.delete(RedisConstant.WS_USER_HEART_BEAT + userId);
+    }
+
+    /**
      * 保存登录信息
      *
      * @param userVO 用户登录封装类
