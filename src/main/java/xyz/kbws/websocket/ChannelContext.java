@@ -128,7 +128,7 @@ public class ChannelContext {
     /**
      * 发送消息
      */
-    public static void sendMessage(MessageSendDTO messageSendDTO, String receiveId) {
+    public void sendMessage(MessageSendDTO messageSendDTO, String receiveId) {
         if (receiveId == null) {
             return;
         }

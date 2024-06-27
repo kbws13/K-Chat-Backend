@@ -1,5 +1,10 @@
 package xyz.kbws.config;
 
+import lombok.extern.slf4j.Slf4j;
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -11,8 +16,27 @@ import org.springframework.data.redis.serializer.RedisSerializer;
  * @date 2024/4/24
  * @description: Redis 配置
  */
+@Slf4j
 @Configuration
 public class RedisConfig<V> {
+
+    @Value("${spring.redis.host:}")
+    private String redisHost;
+
+    @Value("{spring.redis.port:}")
+    private Integer redisPort;
+
+    @Bean(destroyMethod = "shutdown")
+    public RedissonClient redissonClient() {
+        try {
+            Config config = new Config();
+            config.useSingleServer().setAddress("redis://" + redisHost + ":" + redisPort);
+            return Redisson.create(config);
+        } catch (Exception e) {
+            log.info("Redis 配置错误，请检查 Redis 配置");
+        }
+        return null;
+    }
 
     @Bean
     public RedisTemplate<String, V> redisTemplate(RedisConnectionFactory connectionFactory) {

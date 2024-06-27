@@ -15,6 +15,7 @@ import xyz.kbws.common.SysSetting;
 import xyz.kbws.constant.UserConstant;
 import xyz.kbws.exception.BusinessException;
 import xyz.kbws.mapper.*;
+import xyz.kbws.model.dto.message.MessageSendDTO;
 import xyz.kbws.model.dto.userContact.UserContactQueryDTO;
 import xyz.kbws.model.entity.*;
 import xyz.kbws.model.enums.*;
@@ -25,6 +26,7 @@ import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.service.UserContactApplyService;
 import xyz.kbws.service.UserContactService;
 import xyz.kbws.utils.StringUtil;
+import xyz.kbws.websocket.ChannelContext;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -68,6 +70,9 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
 
     @Resource
     private RedisComponent redisComponent;
+
+    @Resource
+    private ChannelContext channelContext;
 
     @Override
     public List<UserContactVO> listUsers(String userId) {
@@ -177,7 +182,12 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
         }
 
         if (userContactApply == null || !UserContactApplyStatusEnum.INIT.getStatus().equals(userContactApply.getStatus())) {
-            // TODO 发送 ws 消息
+            // 发送 ws 消息
+            MessageSendDTO messageSendDTO = new MessageSendDTO();
+            messageSendDTO.setMessageType(MessageTypeEnum.CONTACT_APPLY.getType());
+            messageSendDTO.setMessageContent(applyMessage);
+            messageSendDTO.setContactId(receiveUserId);
+            channelContext.sendMessage(messageSendDTO, receiveUserId);
         }
         return joinType;
     }
