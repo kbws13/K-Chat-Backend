@@ -19,14 +19,16 @@ import xyz.kbws.model.dto.message.MessageSendDTO;
 import xyz.kbws.model.entity.ChatMessage;
 import xyz.kbws.model.entity.ChatSessionUser;
 import xyz.kbws.model.entity.User;
+import xyz.kbws.model.entity.UserContactApply;
 import xyz.kbws.model.enums.MessageTypeEnum;
+import xyz.kbws.model.enums.UserContactApplyStatusEnum;
 import xyz.kbws.model.enums.UserContactTypeEnum;
 import xyz.kbws.model.vo.WsInitVO;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.service.ChatSessionUserService;
+import xyz.kbws.service.UserContactApplyService;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -53,6 +55,9 @@ public class ChannelContext {
 
     @Resource
     private UserMapper userMapper;
+
+    @Resource
+    private UserContactApplyService userContactApplyService;
 
     @Resource
     private RedisComponent redisComponent;
@@ -106,7 +111,12 @@ public class ChannelContext {
         wsInitVO.setChatMessageList(chatMessageList);
 
         // 3.查询好友申请
-        wsInitVO.setApplyCount(0);
+        QueryWrapper<UserContactApply> applyQuery = new QueryWrapper<>();
+        applyQuery.eq("receiveId", userId);
+        applyQuery.eq("status", UserContactApplyStatusEnum.INIT.getStatus());
+        applyQuery.ge("lastApplyTime", lastOfTime);
+        Integer count = Math.toIntExact(userContactApplyService.count(applyQuery));
+        wsInitVO.setApplyCount(count);
         // 发送消息
         MessageSendDTO messageSendDTO = new MessageSendDTO();
         messageSendDTO.setMessageType(MessageTypeEnum.INIT.getType());
