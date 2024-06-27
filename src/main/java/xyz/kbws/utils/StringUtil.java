@@ -11,8 +11,12 @@ import java.util.Arrays;
  * @description:
  */
 public class StringUtil {
-    public static final String getChatSession(String[] userIds) {
+    public static final String getChatSessionForUser(String[] userIds) {
         Arrays.sort(userIds);
         return SecureUtil.md5(StringUtils.join(userIds, ""));
+    }
+
+    public static final String getChatSessionForGroup(String groupId) {
+        return SecureUtil.md5(groupId);
     }
 }

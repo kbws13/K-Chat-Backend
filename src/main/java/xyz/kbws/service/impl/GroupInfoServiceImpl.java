@@ -16,20 +16,23 @@ import xyz.kbws.config.AppConfig;
 import xyz.kbws.constant.CommonConstant;
 import xyz.kbws.constant.FileConstant;
 import xyz.kbws.exception.BusinessException;
+import xyz.kbws.mapper.ChatMessageMapper;
+import xyz.kbws.mapper.ChatSessionUserMapper;
 import xyz.kbws.mapper.GroupInfoMapper;
 import xyz.kbws.mapper.UserContactMapper;
 import xyz.kbws.model.dto.group.GroupInfoQueryDTO;
-import xyz.kbws.model.entity.GroupInfo;
-import xyz.kbws.model.entity.User;
-import xyz.kbws.model.entity.UserContact;
-import xyz.kbws.model.enums.GroupStatusEnum;
-import xyz.kbws.model.enums.UserContactStatusEnum;
-import xyz.kbws.model.enums.UserContactTypeEnum;
+import xyz.kbws.model.dto.message.MessageSendDTO;
+import xyz.kbws.model.entity.*;
+import xyz.kbws.model.enums.*;
 import xyz.kbws.redis.RedisComponent;
+import xyz.kbws.service.ChatSessionService;
 import xyz.kbws.service.GroupInfoService;
 import xyz.kbws.service.UserContactService;
 import xyz.kbws.service.UserService;
 import xyz.kbws.utils.SqlUtils;
+import xyz.kbws.utils.StringUtil;
+import xyz.kbws.websocket.ChannelContext;
+import xyz.kbws.websocket.MessageHandler;
 
 import javax.annotation.Resource;
 import java.io.File;
@@ -38,13 +41,13 @@ import java.util.Date;
 import java.util.List;
 
 /**
-* @author hsy
-* @description 针对表【group_info(群组表)】的数据库操作Service实现
-* @createDate 2024-04-26 14:51:47
-*/
+ * @author hsy
+ * @description 针对表【group_info(群组表)】的数据库操作Service实现
+ * @createDate 2024-04-26 14:51:47
+ */
 @Service
 public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo>
-    implements GroupInfoService{
+        implements GroupInfoService {
 
     @Resource
     private UserService userService;
@@ -57,6 +60,21 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
 
     @Resource
     private UserContactMapper userContactMapper;
+
+    @Resource
+    private ChatSessionService chatSessionService;
+
+    @Resource
+    private ChatSessionUserMapper chatSessionUserMapper;
+
+    @Resource
+    private ChatMessageMapper chatMessageMapper;
+
+    @Resource
+    private MessageHandler messageHandler;
+
+    @Resource
+    private ChannelContext channelContext;
 
     @Resource
     private RedisComponent redisComponent;
@@ -91,7 +109,53 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
             userContact.setUserId(groupInfo.getOwnerId());
             userContact.setCreateTime(date);
             userContactMapper.insert(userContact);
-            // TODO 创建会话
+            // 创建会话
+            String sessionId = StringUtil.getChatSessionForGroup(groupInfo.getId());
+            ChatSession chatSession = new ChatSession();
+            chatSession.setSessionId(sessionId);
+            chatSession.setLastMessage(MessageTypeEnum.GROUP_CREATE.getInitMessage());
+            chatSession.setLastReceiveTime(date.getTime());
+            chatSessionService.saveOrUpdate(chatSession);
+
+            ChatSessionUser chatSessionUser = new ChatSessionUser();
+            chatSessionUser.setUserId(groupInfo.getOwnerId());
+            chatSessionUser.setContactId(groupInfo.getId());
+            chatSessionUser.setSessionId(sessionId);
+            chatSessionUser.setContactName(groupInfo.getName());
+            chatSessionUserMapper.insert(chatSessionUser);
+
+            // 创建消息
+            ChatMessage chatMessage = new ChatMessage();
+            chatMessage.setSessionId(sessionId);
+            chatMessage.setType(MessageTypeEnum.GROUP_CREATE.getType());
+            chatMessage.setContent(MessageTypeEnum.GROUP_CREATE.getInitMessage());
+            chatMessage.setSendUserId(null);
+            chatMessage.setSendUserNickName(null);
+            chatMessage.setSendTime(date.getTime());
+            chatMessage.setContactId(groupInfo.getId());
+            chatMessage.setContactType(UserContactTypeEnum.GROUP.getType());
+            chatMessage.setStatus(MessageStatusEnum.SENDED.getStatus());
+            chatMessageMapper.insert(chatMessage);
+
+            // 发送 WebSocket 消息
+            chatSessionUser.setLastMessage(MessageTypeEnum.GROUP_CREATE.getInitMessage());
+            chatSessionUser.setLastReceiveTime(date.getTime());
+            chatSessionUser.setMemberCount(1);
+
+            MessageSendDTO<ChatSessionUser> messageSendDTO = new MessageSendDTO();
+            messageSendDTO.setSessionId(chatSessionUser.getSessionId());
+            messageSendDTO.setSendUserId(chatSessionUser.getUserId());
+            messageSendDTO.setContactId(chatSessionUser.getContactId());
+            messageSendDTO.setContactName(chatSessionUser.getContactName());
+            messageSendDTO.setLastMessage(chatSessionUser.getLastMessage());
+            messageSendDTO.setExtentData(chatSessionUser);
+            messageHandler.sendMessage(messageSendDTO);
+
+            // 将群组添加到联系人
+            redisComponent.addUserContact(groupInfo.getOwnerId(), groupInfo.getId());
+
+            // 将联系人通道添加到群组通道
+            channelContext.addUserToGroup(groupInfo.getOwnerId(), groupInfo.getId());
             // TODO 发送消息
         } else {
             GroupInfo dbInfo = groupInfoMapper.selectById(groupInfo.getId());

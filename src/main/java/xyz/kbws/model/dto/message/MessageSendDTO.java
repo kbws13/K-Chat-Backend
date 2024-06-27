@@ -91,6 +91,9 @@ public class MessageSendDTO<T> implements Serializable {
 
     private Integer fileType;
 
+    //群员
+    private Integer memberCount;
+
     private static final long serialVersionUID = -7263093001338914406L;
 
     public String getLastMessage() {

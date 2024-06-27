@@ -4,6 +4,7 @@ import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import xyz.kbws.model.dto.message.MessageSendDTO;
 
@@ -24,6 +25,7 @@ public class MessageHandler {
     @Resource
     private RedissonClient redissonClient;
 
+    @Lazy
     @Resource
     private ChannelContext channelContext;
 

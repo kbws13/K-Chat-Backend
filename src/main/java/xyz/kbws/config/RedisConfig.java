@@ -23,7 +23,7 @@ public class RedisConfig<V> {
     @Value("${spring.redis.host:}")
     private String redisHost;
 
-    @Value("{spring.redis.port:}")
+    @Value("${spring.redis.port:}")
     private Integer redisPort;
 
     @Bean(destroyMethod = "shutdown")

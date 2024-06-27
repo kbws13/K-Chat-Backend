@@ -1,11 +1,11 @@
 package xyz.kbws.model.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
 import lombok.Data;
+
+import java.io.Serializable;
 
 /**
  * 会话用户表
@@ -23,7 +23,6 @@ public class ChatSessionUser implements Serializable {
     /**
      * 联系人id
      */
-    @TableId
     private String contactId;
 
     /**
@@ -35,6 +34,18 @@ public class ChatSessionUser implements Serializable {
      * 联系人名称
      */
     private String contactName;
+
+    @TableField(exist = false)
+    private String lastMessage;
+
+    @TableField(exist = false)
+    private Long lastReceiveTime;
+
+    @TableField(exist = false)
+    private Integer contactType;
+
+    @TableField(exist = false)
+    private Integer memberCount;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

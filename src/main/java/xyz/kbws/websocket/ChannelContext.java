@@ -75,7 +75,7 @@ public class ChannelContext {
         List<String> contactIdList = redisComponent.getUserContactList(userId);
         for (String groupId : contactIdList) {
             if (groupId.startsWith(UserContactTypeEnum.GROUP.getPrefix())) {
-                addToGroup(groupId, channel);
+                addUserToGroup(groupId, channel);
             }
         }
         USER_CONTEXT_MAP.put(userId, channel);
@@ -136,13 +136,21 @@ public class ChannelContext {
         if (sendChannel == null) {
             return;
         }
-        // 相对于客户端而言，联系人就是发送人，这里要转一下再发送
-        messageSendDTO.setContactId(messageSendDTO.getSendUserId());
-        messageSendDTO.setContactName(messageSendDTO.getSendUserNickName());
+        // 相对于客户端而言，联系人就是发送人，这里要转一下再发送，好友申请的时候不处理
+        if (MessageTypeEnum.ADD_FRIEND_SELF.getType().equals(messageSendDTO.getMessageType())) {
+            User user = (User) messageSendDTO.getExtentData();
+            messageSendDTO.setMessageType(MessageTypeEnum.ADD_FRIEND.getType());
+            messageSendDTO.setContactId(user.getUserId());
+            messageSendDTO.setContactName(user.getNickName());
+            messageSendDTO.setExtentData(null);
+        } else {
+            messageSendDTO.setContactId(messageSendDTO.getSendUserId());
+            messageSendDTO.setContactName(messageSendDTO.getSendUserNickName());
+        }
         sendChannel.writeAndFlush(new TextWebSocketFrame(JSONUtil.toJsonStr(messageSendDTO)));
     }
 
-    private void addToGroup(String groupId, Channel channel) {
+    private void addUserToGroup(String groupId, Channel channel) {
         ChannelGroup group = GROUP_CONTEXT_MAP.get(groupId);
         if (group == null) {
             group = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
@@ -152,6 +160,11 @@ public class ChannelContext {
             return;
         }
         group.add(channel);
+    }
+
+    public void addUserToGroup(String userId, String groupId) {
+        Channel channel = USER_CONTEXT_MAP.get(userId);
+        addUserToGroup(groupId, channel);
     }
 
     public void removeContext(Channel channel) {

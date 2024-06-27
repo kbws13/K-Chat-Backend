@@ -23,9 +23,12 @@ import xyz.kbws.model.vo.UserContactSearchResultVO;
 import xyz.kbws.model.vo.UserContactVO;
 import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
+import xyz.kbws.service.ChatSessionService;
+import xyz.kbws.service.ChatSessionUserService;
 import xyz.kbws.service.UserContactApplyService;
 import xyz.kbws.service.UserContactService;
 import xyz.kbws.utils.StringUtil;
+import xyz.kbws.websocket.ChannelContext;
 import xyz.kbws.websocket.MessageHandler;
 
 import javax.annotation.Resource;
@@ -48,6 +51,9 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
     private UserContactApplyService userContactApplyService;
 
     @Resource
+    private ChatSessionUserService chatSessionUserService;
+
+    @Resource
     private UserContactMapper userContactMapper;
 
     @Resource
@@ -60,7 +66,7 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
     private UserContactApplyMapper userContactApplyMapper;
 
     @Resource
-    private ChatSessionMapper chatSessionMapper;
+    private ChatSessionService chatSessionService;
 
     @Resource
     private ChatSessionUserMapper chatSessionUserMapper;
@@ -70,6 +76,9 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
 
     @Resource
     private RedisComponent redisComponent;
+
+    @Resource
+    private ChannelContext channelContext;
 
     @Resource
     private MessageHandler messageHandler;
@@ -204,6 +213,7 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
                 throw new BusinessException(ErrorCode.OPERATION_ERROR, "成员已满，无法加入");
             }
         }
+        Date curDate = new Date();
         // 同意双方添加好友
         List<UserContact> contactList = new ArrayList<>();
         // 申请人添加对方
@@ -225,8 +235,132 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
         // 批量插入（使用 AOP 获取当前类的代理对象，然后调用方法，防止事务失效）
         UserContactService userContactService = (UserContactService) AopContext.currentProxy();
         userContactService.saveOrUpdateBatch(contactList);
-        // TODO 如果是好友，接收人也添加申请人为好友 添加缓存
-        // TODO 创建会话 发送消息
+        // 如果是好友，接收人也添加申请人为好友 添加缓存
+        if (UserContactTypeEnum.USER.getType().equals(contactType)) {
+            redisComponent.addUserContact(receiveUserId, applyUserId);
+        }
+        redisComponent.addUserContact(applyUserId, receiveUserId);
+        // 创建会话 发送消息
+        String sessionId = null;
+        if (UserContactTypeEnum.USER.getType().equals(contactType)) {
+            sessionId = StringUtil.getChatSessionForUser(new String[]{applyUserId, contactId});
+        } else {
+            sessionId = StringUtil.getChatSessionForGroup(contactId);
+        }
+        List<ChatSessionUser> chatSessionUserList = new ArrayList<>();
+        if (UserContactTypeEnum.USER.getType().equals(contactType)) {
+            // 创建会话
+            ChatSession chatSession = new ChatSession();
+            chatSession.setSessionId(sessionId);
+            chatSession.setLastMessage(applyMessage);
+            chatSession.setLastReceiveTime(curDate.getTime());
+            
+            // 申请人 Session
+            ChatSessionUser applySessionUser = new ChatSessionUser();
+            applySessionUser.setUserId(applyUserId);
+            applySessionUser.setContactId(contactId);
+            applySessionUser.setSessionId(sessionId);
+            // 查询接收人信息
+            User contactUser = userMapper.selectById(contactId);
+            applySessionUser.setContactName(contactUser.getNickName());
+            chatSessionUserList.add(applySessionUser);
+
+            // 接受人 Session
+            ChatSessionUser contactSessionUser = new ChatSessionUser();
+            contactSessionUser.setUserId(contactId);
+            contactSessionUser.setContactId(applyUserId);
+            contactSessionUser.setSessionId(sessionId);
+            User applyUser = userMapper.selectById(applyUserId);
+            contactSessionUser.setContactName(applyUser.getNickName());
+            chatSessionUserList.add(contactSessionUser);
+
+            chatSessionUserService.saveOrUpdateBatch(chatSessionUserList);
+
+            // 记录消息表
+            ChatMessage chatMessage = new ChatMessage();
+            chatMessage.setSessionId(sessionId);
+            chatMessage.setType(MessageTypeEnum.ADD_FRIEND.getType());
+            chatMessage.setContent(applyMessage);
+            chatMessage.setSendUserId(applyUserId);
+            chatMessage.setSendUserNickName(applyUser.getNickName());
+            chatMessage.setSendTime(curDate.getTime());
+            chatMessage.setContactId(contactId);
+            chatMessage.setContactType(UserContactTypeEnum.USER.getType());
+            chatMessageMapper.insert(chatMessage);
+
+            MessageSendDTO<User> messageSendDTO = new MessageSendDTO();
+            messageSendDTO.setSessionId(chatMessage.getSessionId());
+            messageSendDTO.setSendUserId(chatMessage.getSendUserId());
+            messageSendDTO.setSendUserNickName(chatMessage.getSendUserNickName());
+            messageSendDTO.setContactId(chatMessage.getContactId());
+            messageSendDTO.setMessageContent(chatMessage.getContent());
+            messageSendDTO.setMessageType(chatMessage.getType());
+            messageSendDTO.setSendTime(chatMessage.getSendTime());
+            messageSendDTO.setContactType(chatMessage.getContactType());
+
+            // 发送给接受跟申请的人
+            messageHandler.sendMessage(messageSendDTO);
+
+            // 发送给申请人，发送人就是接收人，联系人就是申请人
+            messageSendDTO.setMessageType(MessageTypeEnum.ADD_FRIEND_SELF.getType());
+            messageSendDTO.setContactId(applyUserId);
+            messageSendDTO.setExtentData(contactUser);
+            messageHandler.sendMessage(messageSendDTO);
+        }else {
+            // 加入群组
+            ChatSessionUser chatSessionUser = new ChatSessionUser();
+            chatSessionUser.setUserId(applyUserId);
+            chatSessionUser.setContactId(contactId);
+            GroupInfo groupInfo = groupInfoMapper.selectById(contactId);
+            chatSessionUser.setContactName(groupInfo.getName());
+            chatSessionUser.setSessionId(sessionId);
+            chatSessionUserService.saveOrUpdate(chatSessionUser);
+
+            // 将群组加入到用户的联系人列表
+            redisComponent.addUserContact(applyUserId, groupInfo.getId());
+            channelContext.addUserToGroup(applyUserId, groupInfo.getId());
+
+            User applyUserInfo = userMapper.selectById(applyUserId);
+            String sendMessage = String.format(MessageTypeEnum.ADD_GROUP.getInitMessage(), applyUserInfo.getNickName());
+
+            // 增加 Session 信息
+            ChatSession chatSession = new ChatSession();
+            chatSession.setSessionId(sessionId);
+            chatSession.setLastMessage(sendMessage);
+            chatSession.setLastReceiveTime(curDate.getTime());
+            chatSessionService.saveOrUpdate(chatSession);
+
+            // 增加聊天信息
+            ChatMessage chatMessage = new ChatMessage();
+            chatMessage.setSessionId(sessionId);
+            chatMessage.setType(MessageTypeEnum.ADD_GROUP.getType());
+            chatMessage.setSendUserId(null);
+            chatMessage.setSendUserNickName(null);
+            chatMessage.setSendTime(curDate.getTime());
+            chatMessage.setContactId(contactId);
+            chatMessage.setContactType(UserContactTypeEnum.GROUP.getType());
+            chatMessage.setStatus(MessageStatusEnum.SENDED.getStatus());
+            chatMessageMapper.insert(chatMessage);
+
+            // 发送群消息
+            MessageSendDTO messageSendDTO = new MessageSendDTO();
+            messageSendDTO.setSessionId(sessionId);
+            messageSendDTO.setSendUserId(chatMessage.getSendUserId());
+            messageSendDTO.setSendUserNickName(chatMessage.getSendUserNickName());
+            messageSendDTO.setContactId(chatMessage.getContactId());
+            messageSendDTO.setMessageType(chatMessage.getType());
+            messageSendDTO.setSendTime(chatMessage.getSendTime());
+            messageSendDTO.setContactType(chatMessage.getContactType());
+            messageSendDTO.setStatus(chatMessage.getStatus());
+            // 获取群人数量
+            QueryWrapper<UserContact> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("contactId", contactId);
+            queryWrapper.eq("status", UserContactStatusEnum.FRIEND.getStatus());
+            Integer memberCount = Math.toIntExact(userContactService.count(queryWrapper));
+            messageSendDTO.setMemberCount(memberCount);
+            messageSendDTO.setContactName(groupInfo.getName());
+            messageHandler.sendMessage(messageSendDTO);
+        }
     }
 
     @Override
@@ -276,12 +410,12 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
         userContact.setStatus(UserContactStatusEnum.FRIEND.getStatus());
         userContactMapper.insert(userContact);
         // 增加会话信息
-        String sessionId = StringUtil.getChatSession(new String[]{userId, robotUid});
+        String sessionId = StringUtil.getChatSessionForUser(new String[]{userId, robotUid});
         ChatSession chatSession = new ChatSession();
         chatSession.setLastMessage(robotWelcome);
         chatSession.setSessionId(sessionId);
         chatSession.setLastReceiveTime(curDate.getTime());
-        this.chatSessionMapper.insert(chatSession);
+        this.chatSessionService.save(chatSession);
         // 增加联系人
         ChatSessionUser chatSessionUser = new ChatSessionUser();
         chatSessionUser.setUserId(userId);
