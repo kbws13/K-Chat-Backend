@@ -167,4 +167,51 @@ public class ChannelContext {
         userMapper.updateById(user);
     }
 
+    // 发送广播消息
+    public void sendMessage(MessageSendDTO messageSendDTO) {
+        UserContactTypeEnum contactTypeEnum = UserContactTypeEnum.getByPrefix(messageSendDTO.getContactId());
+        switch (contactTypeEnum) {
+            case USER:
+                sendToUser(messageSendDTO);
+                break;
+            case GROUP:
+                sendToGroup(messageSendDTO);
+                break;
+        }
+    }
+
+    // 发送给用户
+    private void sendToUser(MessageSendDTO messageSendDTO) {
+        String contactId = messageSendDTO.getContactId();
+        sendMessage(messageSendDTO, contactId);
+        if (MessageTypeEnum.FORCE_OFF_LINE.getType().equals(messageSendDTO.getMessageType())) {
+            // 关闭通道
+            closeContact(contactId);
+        }
+    }
+
+    public void closeContact(String userId) {
+        if (StrUtil.isEmpty(userId)) {
+            return;
+        }
+        redisComponent.clearUserTokenByUserId(userId);
+        Channel channel = USER_CONTEXT_MAP.get(userId);
+        if (channel == null) {
+            return;
+        }
+        channel.close();
+    }
+
+    // 发送给群组
+    private void sendToGroup(MessageSendDTO messageSendDTO) {
+        if (messageSendDTO.getContactId() == null) {
+            return;
+        }
+        ChannelGroup group = GROUP_CONTEXT_MAP.get(messageSendDTO.getContactId());
+        if (group == null) {
+            return;
+        }
+        group.writeAndFlush(new TextWebSocketFrame(JSONUtil.toJsonStr(messageSendDTO)));
+    }
+
 }

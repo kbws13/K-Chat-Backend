@@ -26,7 +26,7 @@ import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.service.UserContactApplyService;
 import xyz.kbws.service.UserContactService;
 import xyz.kbws.utils.StringUtil;
-import xyz.kbws.websocket.ChannelContext;
+import xyz.kbws.websocket.MessageHandler;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -72,7 +72,7 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
     private RedisComponent redisComponent;
 
     @Resource
-    private ChannelContext channelContext;
+    private MessageHandler messageHandler;
 
     @Override
     public List<UserContactVO> listUsers(String userId) {
@@ -187,7 +187,7 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
             messageSendDTO.setMessageType(MessageTypeEnum.CONTACT_APPLY.getType());
             messageSendDTO.setMessageContent(applyMessage);
             messageSendDTO.setContactId(receiveUserId);
-            channelContext.sendMessage(messageSendDTO, receiveUserId);
+            messageHandler.sendMessage(messageSendDTO);
         }
         return joinType;
     }

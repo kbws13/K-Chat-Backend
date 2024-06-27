@@ -1,5 +1,6 @@
 package xyz.kbws.redis;
 
+import cn.hutool.core.util.StrUtil;
 import org.springframework.stereotype.Component;
 import xyz.kbws.common.SysSetting;
 import xyz.kbws.constant.RedisConstant;
@@ -57,6 +58,14 @@ public class RedisComponent {
 
     public UserVO getTokenUserVO(String token) {
         return (UserVO) redisUtils.get(RedisConstant.WS_TOKEN + token);
+    }
+
+    public void clearUserTokenByUserId(String userId) {
+        String token = (String) redisUtils.get(RedisConstant.WS_TOKEN_USERID + userId);
+        if (StrUtil.isEmpty(token)) {
+            return;
+        }
+        redisUtils.delete(RedisConstant.WS_TOKEN);
     }
 
     public SysSetting getSysSetting() {
