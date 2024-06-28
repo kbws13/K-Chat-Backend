@@ -162,9 +162,25 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
                 throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
             }
             groupInfoMapper.updateById(groupInfo);
-            // TODO 更新相关表的冗余信息
+            // 更新相关表的冗余信息
+            String contactName = null;
+            if (!dbInfo.getName().equals(groupInfo.getName())) {
+                contactName = groupInfo.getName();
+            }
+            if (contactName == null) {
+                return;
+            }
+            ChatSessionUser chatSessionUser = chatSessionUserMapper.selectById(groupInfo.getId());
+            chatSessionUser.setContactName(contactName);
+            chatSessionUserMapper.updateById(chatSessionUser);
 
-            // TODO 修改群昵称发送 WebSocket 信息
+            // 修改群昵称发送 WebSocket 信息
+            MessageSendDTO<String> messageSendDTO = new MessageSendDTO<>();
+            messageSendDTO.setContactType(UserContactTypeEnum.GROUP.getType());
+            messageSendDTO.setContactId(groupInfo.getId());
+            messageSendDTO.setExtentData(contactName);
+            messageSendDTO.setMessageType(MessageTypeEnum.CONTACT_NAME_UPDATE.getType());
+            messageHandler.sendMessage(messageSendDTO);
         }
         if (avatarFile == null) {
             return;
