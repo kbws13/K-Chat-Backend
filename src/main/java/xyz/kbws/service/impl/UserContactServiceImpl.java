@@ -77,6 +77,7 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
     @Resource
     private RedisComponent redisComponent;
 
+    @Lazy
     @Resource
     private ChannelContext channelContext;
 

@@ -124,6 +124,12 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
             chatSessionUser.setContactName(groupInfo.getName());
             chatSessionUserMapper.insert(chatSessionUser);
 
+            // 将群组添加到联系人
+            redisComponent.addUserContact(groupInfo.getOwnerId(), groupInfo.getId());
+
+            // 将联系人通道添加到群组通道
+            channelContext.addUserToGroup(groupInfo.getOwnerId(), groupInfo.getId());
+
             // 创建消息
             ChatMessage chatMessage = new ChatMessage();
             chatMessage.setSessionId(sessionId);
@@ -142,7 +148,7 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
             chatSessionUser.setLastReceiveTime(date.getTime());
             chatSessionUser.setMemberCount(1);
 
-            MessageSendDTO<ChatSessionUser> messageSendDTO = new MessageSendDTO();
+            MessageSendDTO<ChatSessionUser> messageSendDTO = new MessageSendDTO<>();
             messageSendDTO.setSessionId(chatSessionUser.getSessionId());
             messageSendDTO.setSendUserId(chatSessionUser.getUserId());
             messageSendDTO.setContactId(chatSessionUser.getContactId());
@@ -150,13 +156,6 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
             messageSendDTO.setLastMessage(chatSessionUser.getLastMessage());
             messageSendDTO.setExtentData(chatSessionUser);
             messageHandler.sendMessage(messageSendDTO);
-
-            // 将群组添加到联系人
-            redisComponent.addUserContact(groupInfo.getOwnerId(), groupInfo.getId());
-
-            // 将联系人通道添加到群组通道
-            channelContext.addUserToGroup(groupInfo.getOwnerId(), groupInfo.getId());
-            // TODO 发送消息
         } else {
             GroupInfo dbInfo = groupInfoMapper.selectById(groupInfo.getId());
             if (!dbInfo.getOwnerId().equals(groupInfo.getOwnerId())) {
