@@ -10,4 +10,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface ChatSessionUserService extends IService<ChatSessionUser> {
 
+    /**
+     * 更新冗余信息
+     * @param contactName
+     * @param contactId
+     */
+    void updateRedundancyInfo(String contactName, String contactId);
 }

@@ -60,6 +60,11 @@ public class RedisComponent {
         return (UserVO) redisUtils.get(RedisConstant.WS_TOKEN + token);
     }
 
+    public UserVO getTokenUserVOByUserId(String userId) {
+        String token = (String) redisUtils.get(RedisConstant.WS_TOKEN_USERID + userId);
+        return getTokenUserVO(token);
+    }
+
     public void clearUserTokenByUserId(String userId) {
         String token = (String) redisUtils.get(RedisConstant.WS_TOKEN_USERID + userId);
         if (StrUtil.isEmpty(token)) {

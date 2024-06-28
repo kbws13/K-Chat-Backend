@@ -25,6 +25,7 @@ import xyz.kbws.model.entity.UserContact;
 import xyz.kbws.model.enums.*;
 import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
+import xyz.kbws.service.ChatSessionUserService;
 import xyz.kbws.service.UserContactService;
 import xyz.kbws.service.UserService;
 import xyz.kbws.utils.JwtUtils;
@@ -45,6 +46,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Resource
     private UserContactService userContactService;
+
+    @Resource
+    private ChatSessionUserService chatSessionUserService;
 
     @Resource
     private UserMapper userMapper;
@@ -148,7 +152,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (!dbUserInfo.getNickName().equals(userUpdateRequest.getNickName())) {
             contactNameUpdate = updateUser.getNickName();
         }
-        // TODO 更新会话信息中的昵称信息
+        // 更新 Token 中的昵称
+        UserVO tokenUserVOByUserId = redisComponent.getTokenUserVOByUserId(userUpdateRequest.getUserId());
+        tokenUserVOByUserId.setNickName(userUpdateRequest.getNickName());
+        redisComponent.saveTokenUserVO(tokenUserVOByUserId);
+
+        // 更新会话信息中的昵称信息
+        chatSessionUserService.updateRedundancyInfo(contactNameUpdate, userUpdateRequest.getUserId());
     }
 
     @Override

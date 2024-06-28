@@ -17,7 +17,6 @@ import xyz.kbws.constant.CommonConstant;
 import xyz.kbws.constant.FileConstant;
 import xyz.kbws.exception.BusinessException;
 import xyz.kbws.mapper.ChatMessageMapper;
-import xyz.kbws.mapper.ChatSessionUserMapper;
 import xyz.kbws.mapper.GroupInfoMapper;
 import xyz.kbws.mapper.UserContactMapper;
 import xyz.kbws.model.dto.group.GroupInfoQueryDTO;
@@ -25,10 +24,7 @@ import xyz.kbws.model.dto.message.MessageSendDTO;
 import xyz.kbws.model.entity.*;
 import xyz.kbws.model.enums.*;
 import xyz.kbws.redis.RedisComponent;
-import xyz.kbws.service.ChatSessionService;
-import xyz.kbws.service.GroupInfoService;
-import xyz.kbws.service.UserContactService;
-import xyz.kbws.service.UserService;
+import xyz.kbws.service.*;
 import xyz.kbws.utils.SqlUtils;
 import xyz.kbws.utils.StringUtil;
 import xyz.kbws.websocket.ChannelContext;
@@ -65,7 +61,7 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
     private ChatSessionService chatSessionService;
 
     @Resource
-    private ChatSessionUserMapper chatSessionUserMapper;
+    private ChatSessionUserService chatSessionUserService;
 
     @Resource
     private ChatMessageMapper chatMessageMapper;
@@ -122,7 +118,7 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
             chatSessionUser.setContactId(groupInfo.getId());
             chatSessionUser.setSessionId(sessionId);
             chatSessionUser.setContactName(groupInfo.getName());
-            chatSessionUserMapper.insert(chatSessionUser);
+            chatSessionUserService.save(chatSessionUser);
 
             // 将群组添加到联系人
             redisComponent.addUserContact(groupInfo.getOwnerId(), groupInfo.getId());
@@ -170,17 +166,7 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
             if (contactName == null) {
                 return;
             }
-            ChatSessionUser chatSessionUser = chatSessionUserMapper.selectById(groupInfo.getId());
-            chatSessionUser.setContactName(contactName);
-            chatSessionUserMapper.updateById(chatSessionUser);
-
-            // 修改群昵称发送 WebSocket 信息
-            MessageSendDTO<String> messageSendDTO = new MessageSendDTO<>();
-            messageSendDTO.setContactType(UserContactTypeEnum.GROUP.getType());
-            messageSendDTO.setContactId(groupInfo.getId());
-            messageSendDTO.setExtentData(contactName);
-            messageSendDTO.setMessageType(MessageTypeEnum.CONTACT_NAME_UPDATE.getType());
-            messageHandler.sendMessage(messageSendDTO);
+            chatSessionUserService.updateRedundancyInfo(contactName, groupInfo.getId());
         }
         if (avatarFile == null) {
             return;
