@@ -13,6 +13,8 @@ public enum ErrorCode {
     FORBIDDEN_ERROR(40300, "禁止访问"),
     SYSTEM_ERROR(50000, "系统内部异常"),
     TOKEN_ERROR(50100, "Token解析失败"),
+    NON_FRIEND(902, "您不是对方的好友，请先向好友发送朋友验证申请"),
+    NOT_IN_GROUP_CHAT(903, "你已经不在群聊，请重新加入群聊"),
     OPERATION_ERROR(50001, "操作失败");
 
     /**

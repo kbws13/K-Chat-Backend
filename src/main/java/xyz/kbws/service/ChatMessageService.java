@@ -1,7 +1,9 @@
 package xyz.kbws.service;
 
+import xyz.kbws.model.dto.message.MessageSendDTO;
 import xyz.kbws.model.entity.ChatMessage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import xyz.kbws.model.vo.UserVO;
 
 /**
 * @author hsy
@@ -9,5 +11,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 * @createDate 2024-06-26 13:45:20
 */
 public interface ChatMessageService extends IService<ChatMessage> {
-
+    MessageSendDTO saveMessage(ChatMessage chatMessage, UserVO userVO);
 }

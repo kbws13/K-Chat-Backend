@@ -1,7 +1,7 @@
 package xyz.kbws.service;
 
-import xyz.kbws.model.entity.ChatSession;
 import com.baomidou.mybatisplus.extension.service.IService;
+import xyz.kbws.model.entity.ChatSession;
 
 /**
 * @author hsy

@@ -5,6 +5,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 
+import static xyz.kbws.service.impl.UserContactServiceImpl.cleanHtmlTag;
+
 /**
  * @author kbws
  * @date 2024/6/26
@@ -18,5 +20,10 @@ public class StringUtil {
 
     public static final String getChatSessionForGroup(String groupId) {
         return SecureUtil.md5(groupId);
+    }
+
+    public static String resetMessageContent(String content) {
+        content = cleanHtmlTag(content);
+        return content;
     }
 }

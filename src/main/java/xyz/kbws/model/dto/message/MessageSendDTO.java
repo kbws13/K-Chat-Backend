@@ -87,7 +87,7 @@ public class MessageSendDTO<T> implements Serializable {
      */
     private Long fileSize;
 
-    private Long fileName;
+    private String fileName;
 
     private Integer fileType;
 
