@@ -250,15 +250,51 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
         // 更新联系人信息
         QueryWrapper<UserContact> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("contactId", groupId);
+        queryWrapper.eq("contactType", UserContactTypeEnum.GROUP.getType());
         List<UserContact> userContacts = userContactMapper.selectList(queryWrapper);
         for (UserContact userContact : userContacts) {
             userContact.setStatus(UserContactStatusEnum.DEL.getStatus());
         }
         userContactService.updateBatchById(userContacts);
 
-        // TODO 移除相关群员的联系人缓存
-
-        // TODO 发消息 1.更新会话消息 2.记录群消息 3.发生解散通知消息
+        // 移除相关群员的联系人缓存
+        List<UserContact> userContactList = userContactMapper.selectList(queryWrapper);
+        for (UserContact userContact : userContactList) {
+            redisComponent.removeUserContact(userContact.getUserId(), userContact.getContactId());
+        }
+        // 发消息
+        String sessionId = StringUtil.getChatSessionForGroup(groupId);
+        Date curTime = new Date();
+        String messageContent = MessageTypeEnum.DISSOLUTION_GROUP.getInitMessage();
+        // 1.更新会话消息
+        ChatSession chatSession = new ChatSession();
+        chatSession.setSessionId(sessionId);
+        chatSession.setLastMessage(messageContent);
+        chatSession.setLastReceiveTime(curTime.getTime());
+        chatSessionService.saveOrUpdate(chatSession);
+        // 2.记录群消息
+        ChatMessage chatMessage = new ChatMessage();
+        chatMessage.setSessionId(sessionId);
+        chatMessage.setSendTime(curTime.getTime());
+        chatMessage.setContactType(UserContactTypeEnum.GROUP.getType());
+        chatMessage.setStatus(MessageStatusEnum.SENDED.getStatus());
+        chatMessage.setType(MessageTypeEnum.DISSOLUTION_GROUP.getType());
+        chatMessage.setContactId(groupId);
+        chatMessage.setContent(messageContent);
+        chatMessageMapper.insert(chatMessage);
+        // 3.发生解散通知消息
+        MessageSendDTO messageSendDTO = new MessageSendDTO();
+        messageSendDTO.setMessageId(Long.valueOf(chatMessage.getId()));
+        messageSendDTO.setSessionId(chatMessage.getSessionId());
+        messageSendDTO.setSendUserId(chatMessage.getSendUserId());
+        messageSendDTO.setSendUserNickName(chatMessage.getSendUserNickName());
+        messageSendDTO.setContactId(chatMessage.getContactId());
+        messageSendDTO.setMessageContent(chatMessage.getContent());
+        messageSendDTO.setMessageType(chatMessage.getType());
+        messageSendDTO.setSendTime(chatMessage.getSendTime());
+        messageSendDTO.setContactType(chatMessage.getContactType());
+        messageSendDTO.setStatus(chatMessage.getStatus());
+        messageHandler.sendMessage(messageSendDTO);
     }
 }
 
