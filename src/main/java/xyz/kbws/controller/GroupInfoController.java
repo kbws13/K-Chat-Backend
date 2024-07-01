@@ -18,6 +18,7 @@ import xyz.kbws.model.dto.group.GroupInfoQueryDTO;
 import xyz.kbws.model.entity.GroupInfo;
 import xyz.kbws.model.entity.UserContact;
 import xyz.kbws.model.enums.GroupStatusEnum;
+import xyz.kbws.model.enums.MessageTypeEnum;
 import xyz.kbws.model.enums.UserContactStatusEnum;
 import xyz.kbws.model.enums.UserContactTypeEnum;
 import xyz.kbws.model.vo.GroupInfoVO;
@@ -126,12 +127,21 @@ public class GroupInfoController {
 
     @ApiOperation(value = "加载群聊列表")
     @PostMapping("/loadGroupInfo")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @AuthCheck
     public BaseResponse<Page<GroupInfo>> loadGroupInfo(@RequestBody GroupInfoQueryDTO groupInfoQueryDTO) {
         groupInfoQueryDTO.setQueryGroupOwnerName(true);
         groupInfoQueryDTO.setQueryMemberCount(true);
         Page<GroupInfo> result = groupInfoService.getGroupInfoByPage(groupInfoQueryDTO);
         return ResultUtils.success(result);
+    }
+
+    @ApiOperation(value = "退群")
+    @PostMapping("/leaveGroup")
+    @AuthCheck
+    public BaseResponse<String> leaveGroup(HttpServletRequest request, @RequestBody DeleteRequest deleteRequest) {
+        UserVO userVOByToken = jwtUtils.getUserVOByToken(request);
+        groupInfoService.leaveGroup(userVOByToken.getUserId(), deleteRequest.getId(), MessageTypeEnum.LEAVE_GROUP);
+        return ResultUtils.success("退群成功");
     }
 
     @ApiOperation(value = "解散群聊")

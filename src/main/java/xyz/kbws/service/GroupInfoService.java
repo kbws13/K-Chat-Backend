@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 import xyz.kbws.model.dto.group.GroupInfoQueryDTO;
 import xyz.kbws.model.entity.GroupInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
+import xyz.kbws.model.enums.MessageTypeEnum;
 
 import java.io.IOException;
 
@@ -38,6 +39,14 @@ public interface GroupInfoService extends IService<GroupInfo> {
      * @return
      */
     QueryWrapper<GroupInfo> getQueryWrapper(GroupInfoQueryDTO groupInfoQueryDTO);
+
+    /**
+     * 退群
+     * @param userId
+     * @param groupId
+     * @param messageTypeEnum
+     */
+    void leaveGroup(String userId, String groupId, MessageTypeEnum messageTypeEnum);
 
     /**
      * 解散群聊

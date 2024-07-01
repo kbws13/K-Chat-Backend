@@ -238,6 +238,63 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
 
     @Transactional(rollbackFor = Exception.class)
     @Override
+    public void leaveGroup(String userId, String groupId, MessageTypeEnum messageTypeEnum) {
+        GroupInfo groupInfo = groupInfoMapper.selectById(groupId);
+        if (groupInfo == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 创建者不能退出群聊只能解散群
+        if (userId.equals(groupInfo.getOwnerId())) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR);
+        }
+        QueryWrapper<UserContact> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("userId", userId);
+        queryWrapper.eq("groupId", groupId);
+        int count = userContactMapper.delete(queryWrapper);
+        if (count == 0) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR);
+        }
+        User user = userService.getById(userId);
+        String sessionId = StringUtil.getChatSessionForGroup(groupId);
+        Date curTime = new Date();
+        String messageContent = String.format(messageTypeEnum.getInitMessage(), user.getNickName());
+        // 1.更新会话消息
+        ChatSession chatSession = new ChatSession();
+        chatSession.setSessionId(sessionId);
+        chatSession.setLastMessage(messageContent);
+        chatSession.setLastReceiveTime(curTime.getTime());
+        chatSessionService.saveOrUpdate(chatSession);
+        // 2.记录群消息
+        ChatMessage chatMessage = new ChatMessage();
+        chatMessage.setSessionId(sessionId);
+        chatMessage.setSendTime(curTime.getTime());
+        chatMessage.setContactType(UserContactTypeEnum.GROUP.getType());
+        chatMessage.setStatus(MessageStatusEnum.SENDED.getStatus());
+        chatMessage.setType(messageTypeEnum.getType());
+        chatMessage.setContactId(groupId);
+        chatMessage.setContent(messageContent);
+        chatMessageMapper.insert(chatMessage);
+        // 3.发生解散通知消息
+        QueryWrapper<UserContact> query = new QueryWrapper<>();
+        query.eq("contactId", groupId);
+        query.eq("status", UserContactStatusEnum.FRIEND.getStatus());
+        Integer memberCount = Math.toIntExact(userContactService.count(queryWrapper));
+
+        MessageSendDTO<String> messageSendDTO = new MessageSendDTO<>();
+        messageSendDTO.setSessionId(chatMessage.getSessionId());
+        messageSendDTO.setContactId(chatMessage.getContactId());
+        messageSendDTO.setMessageContent(chatMessage.getContent());
+        messageSendDTO.setMessageType(chatMessage.getType());
+        messageSendDTO.setSendTime(chatMessage.getSendTime());
+        messageSendDTO.setContactType(chatMessage.getContactType());
+        messageSendDTO.setStatus(chatMessage.getStatus());
+        messageSendDTO.setExtentData(userId);
+        messageSendDTO.setMemberCount(memberCount);
+        messageHandler.sendMessage(messageSendDTO);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
     public void dissolutionGroup(String ownerId, String groupId) {
         GroupInfo dbInfo = this.getById(groupId);
         if (dbInfo == null || !dbInfo.getOwnerId().equals(ownerId)) {
