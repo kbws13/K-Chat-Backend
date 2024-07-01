@@ -14,12 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import xyz.kbws.constant.CommonConstant;
 import xyz.kbws.mapper.ChatMessageMapper;
+import xyz.kbws.mapper.UserContactMapper;
 import xyz.kbws.mapper.UserMapper;
 import xyz.kbws.model.dto.message.MessageSendDTO;
-import xyz.kbws.model.entity.ChatMessage;
-import xyz.kbws.model.entity.ChatSessionUser;
-import xyz.kbws.model.entity.User;
-import xyz.kbws.model.entity.UserContactApply;
+import xyz.kbws.model.entity.*;
 import xyz.kbws.model.enums.MessageTypeEnum;
 import xyz.kbws.model.enums.UserContactApplyStatusEnum;
 import xyz.kbws.model.enums.UserContactTypeEnum;
@@ -57,72 +55,87 @@ public class ChannelContext {
     private UserMapper userMapper;
 
     @Resource
+    private UserContactMapper userContactMapper;
+
+    @Resource
     private UserContactApplyService userContactApplyService;
 
     @Resource
     private RedisComponent redisComponent;
 
     public void addContext(String userId, Channel channel) {
-        String channelId = channel.id().toString();
-        log.info("channelId：{}", channelId);
-        AttributeKey attributeKey = null;
-        if (!AttributeKey.exists(channelId)) {
-            attributeKey = AttributeKey.newInstance(channelId);
-        }else {
-            attributeKey = AttributeKey.valueOf(channelId);
-        }
-        channel.attr(attributeKey).set(userId);
-        List<String> contactIdList = redisComponent.getUserContactList(userId);
-        for (String groupId : contactIdList) {
-            if (groupId.startsWith(UserContactTypeEnum.GROUP.getPrefix())) {
-                addUserToGroup(groupId, channel);
+        try {
+            String channelId = channel.id().toString();
+            log.info("channelId：{}", channelId);
+            AttributeKey attributeKey = null;
+            if (!AttributeKey.exists(channelId)) {
+                attributeKey = AttributeKey.newInstance(channelId);
+            } else {
+                attributeKey = AttributeKey.valueOf(channelId);
             }
+            channel.attr(attributeKey).set(userId);
+            List<String> contactIdList = redisComponent.getUserContactList(userId);
+            for (String groupId : contactIdList) {
+                if (groupId.startsWith(UserContactTypeEnum.GROUP.getPrefix())) {
+                    addUserToGroup(groupId, channel);
+                }
+            }
+            USER_CONTEXT_MAP.put(userId, channel);
+            redisComponent.saveUserHeartBeat(userId);
+            // 更新用户最后登录时间
+            User user = userMapper.selectById(userId);
+            user.setLastLoginTime(new Date());
+            userMapper.updateById(user);
+
+            // 给用户发送消息
+            // 获取用户最后离线时间
+            Long sourceLastOfTime = user.getLastOffTime();
+            Long lastOfTime = sourceLastOfTime;
+            // 这里避免毫秒时间差，所以减去1秒的时间
+            // 如果时间太久，只取最近三天的消息数
+            if (sourceLastOfTime != null && System.currentTimeMillis() - CommonConstant.MILLISECOND_3DAYS_AGO > sourceLastOfTime) {
+                lastOfTime = CommonConstant.MILLISECOND_3DAYS_AGO;
+            }
+            // 1.查询会话信息 查询用户所有的会话信息 保证换了设备会话同步
+            QueryWrapper<ChatSessionUser> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("userId", userId);
+            queryWrapper.orderByDesc("lastReceiveTime");
+            List<ChatSessionUser> chatSessionUserList = chatSessionUserService.list(queryWrapper);
+
+            WsInitVO wsInitVO = new WsInitVO();
+            wsInitVO.setChatSessionList(chatSessionUserList);
+
+            // 2.查询聊天消息
+            // 查询用户联系人
+            QueryWrapper<UserContact> queryChat = new QueryWrapper<>();
+            queryChat.eq("contactType", UserContactTypeEnum.GROUP.getType());
+            queryChat.eq("userId", userId);
+            List<UserContact> groupContactList = userContactMapper.selectList(queryChat);
+            List<String> groupIdList = groupContactList.stream().map(UserContact::getContactId).collect(Collectors.toList());
+            // 将自己也加进去
+            groupIdList.add(userId);
+            QueryWrapper<ChatMessage> query = new QueryWrapper<>();
+            query.in("contactId", groupIdList);
+            query.ge("sendTime", lastOfTime);
+            List<ChatMessage> chatMessageList = chatMessageMapper.selectList(query);
+            wsInitVO.setChatMessageList(chatMessageList);
+
+            // 3.查询好友申请
+            QueryWrapper<UserContactApply> applyQuery = new QueryWrapper<>();
+            applyQuery.eq("receiveId", userId);
+            applyQuery.eq("status", UserContactApplyStatusEnum.INIT.getStatus());
+            applyQuery.ge("lastApplyTime", lastOfTime);
+            Integer count = Math.toIntExact(userContactApplyService.count(applyQuery));
+            wsInitVO.setApplyCount(count);
+            // 发送消息
+            MessageSendDTO messageSendDTO = new MessageSendDTO();
+            messageSendDTO.setMessageType(MessageTypeEnum.INIT.getType());
+            messageSendDTO.setContactId(userId);
+            messageSendDTO.setExtentData(wsInitVO);
+            sendMessage(messageSendDTO, userId);
+        } catch (Exception e) {
+            log.error("初始化链接失败", e);
         }
-        USER_CONTEXT_MAP.put(userId, channel);
-        redisComponent.saveUserHeartBeat(userId);
-        // 更新用户最后登录时间
-        User user = userMapper.selectById(userId);
-        user.setLastLoginTime(new Date());
-        userMapper.updateById(user);
-
-        // 给用户发送消息
-        Long sourceLastOfTime = user.getLastOffTime();
-        Long lastOfTime = sourceLastOfTime;
-        if (sourceLastOfTime != null && System.currentTimeMillis() - CommonConstant.MILLISECOND_3DAYS_AGO > sourceLastOfTime) {
-            lastOfTime = CommonConstant.MILLISECOND_3DAYS_AGO;
-        }
-        // 1.查询会话信息 查询用户所有的会话信息 保证换了设备会话同步
-        QueryWrapper<ChatSessionUser> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("userId", userId);
-        queryWrapper.orderByDesc("lastReceiveTime");
-        List<ChatSessionUser> chatSessionUserList = chatSessionUserService.list(queryWrapper);
-
-        WsInitVO wsInitVO = new WsInitVO();
-        wsInitVO.setChatSessionList(chatSessionUserList);
-
-        // 2.查询聊天消息
-        // 查询所有联系人
-        List<String> groupIdList = contactIdList.stream().filter(item -> item.startsWith(UserContactTypeEnum.GROUP.getPrefix())).collect(Collectors.toList());
-        groupIdList.add(userId);
-        QueryWrapper<ChatMessage> query = new QueryWrapper<>();
-        query.in("contactId", groupIdList);
-        query.ge("sendTime", lastOfTime);
-        List<ChatMessage> chatMessageList = chatMessageMapper.selectList(query);
-        wsInitVO.setChatMessageList(chatMessageList);
-
-        // 3.查询好友申请
-        QueryWrapper<UserContactApply> applyQuery = new QueryWrapper<>();
-        applyQuery.eq("receiveId", userId);
-        applyQuery.eq("status", UserContactApplyStatusEnum.INIT.getStatus());
-        applyQuery.ge("lastApplyTime", lastOfTime);
-        Integer count = Math.toIntExact(userContactApplyService.count(applyQuery));
-        wsInitVO.setApplyCount(count);
-        // 发送消息
-        MessageSendDTO messageSendDTO = new MessageSendDTO();
-        messageSendDTO.setMessageType(MessageTypeEnum.INIT.getType());
-        messageSendDTO.setContactId(userId);
-        messageSendDTO.setExtentData(wsInitVO);
-        sendMessage(messageSendDTO, userId);
     }
 
     /**
@@ -167,10 +180,14 @@ public class ChannelContext {
         addUserToGroup(groupId, channel);
     }
 
+    /**
+     * 删除通道
+     * @param channel
+     */
     public void removeContext(Channel channel) {
         Attribute<String> attributeKey = channel.attr(AttributeKey.valueOf(channel.id().toString()));
         String userId = attributeKey.get();
-        if (StrUtil.isEmpty(userId)) {
+        if (!StrUtil.isEmpty(userId)) {
             USER_CONTEXT_MAP.remove(userId);
         }
         redisComponent.removeUserHeartBeat(userId);
@@ -178,6 +195,22 @@ public class ChannelContext {
         User user = userMapper.selectById(userId);
         user.setLastOffTime(System.currentTimeMillis());
         userMapper.updateById(user);
+    }
+
+    /**
+     * 关闭连接
+     * @param userId
+     */
+    public void closeContext(String userId) {
+        if (StrUtil.isEmpty(userId)) {
+            return;
+        }
+        redisComponent.clearUserTokenByUserId(userId);
+        Channel channel = USER_CONTEXT_MAP.get(userId);
+        USER_CONTEXT_MAP.remove(userId);
+        if (channel != null) {
+            channel.close();
+        }
     }
 
     // 发送广播消息

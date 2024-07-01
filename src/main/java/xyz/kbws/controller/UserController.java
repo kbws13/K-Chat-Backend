@@ -26,6 +26,7 @@ import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.redis.RedisUtils;
 import xyz.kbws.service.UserService;
 import xyz.kbws.utils.JwtUtils;
+import xyz.kbws.websocket.ChannelContext;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -50,6 +51,9 @@ public class UserController {
 
     @Resource
     private RedisComponent redisComponent;
+
+    @Resource
+    private ChannelContext channelContext;
 
     @Resource
     private JwtUtils jwtUtils;
@@ -102,7 +106,9 @@ public class UserController {
     @ApiOperation(value = "退出登录")
     @GetMapping("/logout")
     public BaseResponse<String> logout(HttpServletRequest request) {
-        // TODO 退出登录 关闭 WebSocket 连接
+        UserVO userVOByToken = jwtUtils.getUserVOByToken(request);
+        // 退出登录 关闭 WebSocket 连接
+        channelContext.closeContext(userVOByToken.getUserId());
         return ResultUtils.success("退出登录成功");
     }
 
@@ -128,12 +134,14 @@ public class UserController {
 
     @ApiOperation(value = "修改用户密码")
     @PostMapping("/updatePwd")
+    @AuthCheck
     public BaseResponse<String> updatePassword(HttpServletRequest request, @RequestParam String password) {
         UserVO userVOByToken = jwtUtils.getUserVOByToken(request);
         User user = userService.getById(userVOByToken.getUserId());
         user.setPassword(SecureUtil.md5(password));
         userService.updateById(user);
-        // TODO 强制退出，重新登录
+        // 强制退出，重新登录
+        channelContext.closeContext(userVOByToken.getUserId());
         return ResultUtils.success("修改成功，请重新登录");
     }
 

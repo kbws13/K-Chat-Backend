@@ -233,7 +233,7 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
         queryWrapper.eq(status != null, "status", status);
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
-        return null;
+        return queryWrapper;
     }
 
     @Transactional(rollbackFor = Exception.class)

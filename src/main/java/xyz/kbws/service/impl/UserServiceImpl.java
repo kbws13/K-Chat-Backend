@@ -17,6 +17,7 @@ import xyz.kbws.exception.BusinessException;
 import xyz.kbws.mapper.UserBeautyMapper;
 import xyz.kbws.mapper.UserContactMapper;
 import xyz.kbws.mapper.UserMapper;
+import xyz.kbws.model.dto.message.MessageSendDTO;
 import xyz.kbws.model.dto.user.UserQueryRequest;
 import xyz.kbws.model.dto.user.UserUpdateRequest;
 import xyz.kbws.model.entity.User;
@@ -30,6 +31,7 @@ import xyz.kbws.service.UserContactService;
 import xyz.kbws.service.UserService;
 import xyz.kbws.utils.JwtUtils;
 import xyz.kbws.utils.SqlUtils;
+import xyz.kbws.websocket.MessageHandler;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -64,6 +66,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Resource
     private RedisComponent redisComponent;
+
+    @Resource
+    private MessageHandler messageHandler;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -163,7 +168,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     public void forceOffLine(String userId) {
-        // TODO  强制下线
+        // 强制下线
+        MessageSendDTO messageSendDTO = new MessageSendDTO();
+        messageSendDTO.setContactType(UserContactTypeEnum.USER.getType());
+        messageSendDTO.setMessageType(MessageTypeEnum.FORCE_OFF_LINE.getType());
+        messageSendDTO.setContactId(userId);
+        messageHandler.sendMessage(messageSendDTO);
     }
 
     @Override
