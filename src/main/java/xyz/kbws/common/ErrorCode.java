@@ -15,6 +15,7 @@ public enum ErrorCode {
     TOKEN_ERROR(50100, "Token解析失败"),
     NON_FRIEND(902, "您不是对方的好友，请先向好友发送朋友验证申请"),
     NOT_IN_GROUP_CHAT(903, "你已经不在群聊，请重新加入群聊"),
+    FILE_DOES_NOT_EXIST(903, "文件不存在"),
     OPERATION_ERROR(50001, "操作失败");
 
     /**
