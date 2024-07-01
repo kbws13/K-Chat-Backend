@@ -7,6 +7,7 @@ import xyz.kbws.model.dto.group.GroupInfoQueryDTO;
 import xyz.kbws.model.entity.GroupInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import xyz.kbws.model.enums.MessageTypeEnum;
+import xyz.kbws.model.vo.UserVO;
 
 import java.io.IOException;
 
@@ -54,4 +55,13 @@ public interface GroupInfoService extends IService<GroupInfo> {
      * @param groupId
      */
     void dissolutionGroup(String ownerId, String groupId);
+
+    /**
+     * 添加或移除群组人员
+     * @param userVO
+     * @param groupId
+     * @param contactIds
+     * @param opType
+     */
+    void addOrRemoveGroupUser(UserVO userVO, String groupId, String contactIds, Integer opType);
 }

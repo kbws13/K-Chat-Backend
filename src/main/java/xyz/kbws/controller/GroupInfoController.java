@@ -14,6 +14,7 @@ import xyz.kbws.common.ErrorCode;
 import xyz.kbws.common.ResultUtils;
 import xyz.kbws.constant.UserConstant;
 import xyz.kbws.exception.BusinessException;
+import xyz.kbws.model.dto.chat.ChangeGroupUserDTO;
 import xyz.kbws.model.dto.group.GroupInfoQueryDTO;
 import xyz.kbws.model.entity.GroupInfo;
 import xyz.kbws.model.entity.UserContact;
@@ -154,5 +155,14 @@ public class GroupInfoController {
         }
         groupInfoService.dissolutionGroup(groupInfo.getOwnerId(), deleteRequest.getId());
         return ResultUtils.success("解散成功");
+    }
+
+    @ApiOperation(value = "添加或移除群组人员")
+    @PostMapping("/addOrRemoveGroupUser")
+    @AuthCheck
+    public BaseResponse addOrRemoveGroupUser(HttpServletRequest request, @RequestBody ChangeGroupUserDTO changeGroupUserDTO) {
+        UserVO userVOByToken = jwtUtils.getUserVOByToken(request);
+        groupInfoService.addOrRemoveGroupUser(userVOByToken, changeGroupUserDTO.getGroupId(), changeGroupUserDTO.getSelectContacts(), changeGroupUserDTO.getOpType());
+        return ResultUtils.success("操作成功");
     }
 }

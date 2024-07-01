@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +24,7 @@ import xyz.kbws.model.dto.group.GroupInfoQueryDTO;
 import xyz.kbws.model.dto.message.MessageSendDTO;
 import xyz.kbws.model.entity.*;
 import xyz.kbws.model.enums.*;
+import xyz.kbws.model.vo.UserVO;
 import xyz.kbws.redis.RedisComponent;
 import xyz.kbws.service.*;
 import xyz.kbws.utils.SqlUtils;
@@ -50,6 +52,10 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
 
     @Resource
     private UserContactService userContactService;
+
+    @Resource
+    @Lazy
+    private GroupInfoService groupInfoService;
 
     @Resource
     private GroupInfoMapper groupInfoMapper;
@@ -352,6 +358,24 @@ public class GroupInfoServiceImpl extends ServiceImpl<GroupInfoMapper, GroupInfo
         messageSendDTO.setContactType(chatMessage.getContactType());
         messageSendDTO.setStatus(chatMessage.getStatus());
         messageHandler.sendMessage(messageSendDTO);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void addOrRemoveGroupUser(UserVO userVO, String groupId, String contactIds, Integer opType) {
+        GroupInfo groupInfo = groupInfoMapper.selectById(groupId);
+        if (groupInfo == null || !groupInfo.getOwnerId().equals(userVO.getUserId())) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        String[] contactIdList = contactIds.split(",");
+        for (String contactId : contactIdList) {
+            // 移除群员
+            if (CommonConstant.ZERO.equals(opType)) {
+                groupInfoService.leaveGroup(contactId, groupId, MessageTypeEnum.LEAVE_GROUP);
+            } else {
+                userContactService.addUserContact(contactId, null, groupId, UserContactTypeEnum.GROUP.getType(), null);
+            }
+        }
     }
 }
 

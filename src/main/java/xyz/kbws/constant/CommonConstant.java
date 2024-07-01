@@ -25,4 +25,8 @@ public interface CommonConstant {
      */
     Long MILLISECOND_3DAYS_AGO = 3 * 24 * 60 * 60 * 1000L;
 
+    Integer ZERO = 0;
+
+    Integer ONE = 1;
+
 }
