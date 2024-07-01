@@ -389,8 +389,10 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
         queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userId", contactId).eq("contactId", userContact);
         userContactMapper.update(friend, queryWrapper);
-        // TODO 从我的好友列表缓存中删除
-        // TODO 从好友列表缓存中删除我
+        // 从我的好友列表缓存中删除
+        redisComponent.removeUserContact(contactId, userId);
+        // 从好友列表缓存中删除我
+        redisComponent.removeUserContact(userId, contactId);
         return true;
     }
 
