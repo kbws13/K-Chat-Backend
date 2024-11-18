@@ -228,7 +228,7 @@ public class UserContactServiceImpl extends MppServiceImpl<UserContactMapper, Us
         if (UserContactTypeEnum.USER.getType().equals(contactType)) {
             userContact = new UserContact();
             userContact.setUserId(receiveUserId);
-            userContact.setContactId(contactId);
+            userContact.setContactId(applyUserId);
             userContact.setContactType(contactType);
             userContact.setStatus(UserContactStatusEnum.FRIEND.getStatus());
             contactList.add(userContact);
