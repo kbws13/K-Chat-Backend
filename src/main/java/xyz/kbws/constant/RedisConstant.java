@@ -17,7 +17,7 @@ public interface RedisConstant {
 
     String WS_TOKEN_USERID = "kchat:ws:token:userid:";
 
-    String USER_CONTACT = "easychat:ws:user:contact:";
+    String USER_CONTACT = "kchat:ws:user:contact:";
 
     String ROBOT_UID = UserContactTypeEnum.USER.getPrefix() + "robot";
 

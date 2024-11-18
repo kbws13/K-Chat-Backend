@@ -4,7 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.jeffreyning.mybatisplus.service.MppServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.context.annotation.Lazy;
@@ -43,7 +43,7 @@ import java.util.List;
  */
 @Slf4j
 @Service
-public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserContact>
+public class UserContactServiceImpl extends MppServiceImpl<UserContactMapper, UserContact>
         implements UserContactService {
 
     @Lazy
@@ -225,7 +225,7 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
         userContact.setStatus(UserContactStatusEnum.FRIEND.getStatus());
         contactList.add(userContact);
         // 如果是申请好友，接收人添加申请人，群组不用添加对方为好友
-        if (UserContactTypeEnum.GROUP.getType().equals(contactType)) {
+        if (UserContactTypeEnum.USER.getType().equals(contactType)) {
             userContact = new UserContact();
             userContact.setUserId(receiveUserId);
             userContact.setContactId(contactId);
@@ -235,14 +235,14 @@ public class UserContactServiceImpl extends ServiceImpl<UserContactMapper, UserC
         }
         // 批量插入（使用 AOP 获取当前类的代理对象，然后调用方法，防止事务失效）
         UserContactService userContactService = (UserContactService) AopContext.currentProxy();
-        userContactService.saveOrUpdateBatch(contactList);
+        userContactService.saveOrUpdateBatchByMultiId(contactList);
         // 如果是好友，接收人也添加申请人为好友 添加缓存
         if (UserContactTypeEnum.USER.getType().equals(contactType)) {
             redisComponent.addUserContact(receiveUserId, applyUserId);
         }
         redisComponent.addUserContact(applyUserId, receiveUserId);
         // 创建会话 发送消息
-        String sessionId = null;
+        String sessionId;
         if (UserContactTypeEnum.USER.getType().equals(contactType)) {
             sessionId = StringUtil.getChatSessionForUser(new String[]{applyUserId, contactId});
         } else {

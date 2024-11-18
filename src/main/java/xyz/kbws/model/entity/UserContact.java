@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.github.jeffreyning.mybatisplus.anno.MppMultiId;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -20,12 +21,13 @@ public class UserContact implements Serializable {
     /**
      * 用户id
      */
-    @TableId
+    @MppMultiId
     private String userId;
 
     /**
      * 联系人id或者群组id
      */
+    @MppMultiId
     private String contactId;
 
     /**

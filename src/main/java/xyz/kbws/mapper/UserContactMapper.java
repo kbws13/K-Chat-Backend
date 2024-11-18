@@ -1,6 +1,6 @@
 package xyz.kbws.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.github.jeffreyning.mybatisplus.base.MppBaseMapper;
 import org.apache.ibatis.annotations.Param;
 import xyz.kbws.model.dto.userContact.UserContactQueryDTO;
 import xyz.kbws.model.entity.UserContact;
@@ -13,7 +13,7 @@ import java.util.List;
  * @date 2024/4/26
  * @description:
  */
-public interface UserContactMapper extends BaseMapper<UserContact> {
+public interface UserContactMapper extends MppBaseMapper<UserContact> {
 
     /**
      * 根据 userId 关联查询 user_contact 表跟 user 表

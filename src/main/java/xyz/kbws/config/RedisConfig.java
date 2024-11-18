@@ -26,11 +26,14 @@ public class RedisConfig<V> {
     @Value("${spring.redis.port:}")
     private Integer redisPort;
 
+    @Value("${spring.redis.password:}")
+    private String password;
+
     @Bean(destroyMethod = "shutdown")
     public RedissonClient redissonClient() {
         try {
             Config config = new Config();
-            config.useSingleServer().setAddress("redis://" + redisHost + ":" + redisPort);
+            config.useSingleServer().setAddress("redis://" + redisHost + ":" + redisPort).setPassword(password);
             return Redisson.create(config);
         } catch (Exception e) {
             log.info("Redis 配置错误，请检查 Redis 配置");
